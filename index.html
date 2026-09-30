@@ -1,0 +1,1667 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Node Hunter</title>
+<meta name="description" content="A playable pixel-art guide to radial and angular nodes in s, p, d and f orbitals, with a 3D orbital viewer, 2D slices, a node table and a quiz.">
+<meta name="theme-color" content="#070403">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Node Hunter">
+<meta property="og:description" content="A playable pixel-art guide to radial and angular nodes in s, p, d and f orbitals, with a 3D orbital viewer, 2D slices, a node table and a quiz.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%2011%2011%27%20shape-rendering%3D%27crispEdges%27%3E%3Crect%20width%3D%2711%27%20height%3D%2711%27%20fill%3D%27%23070403%27/%3E%3Cpath%20fill%3D%27%23ff7a1a%27%20d%3D%27M4%201h1v1h-1zM5%201h1v1h-1zM6%201h1v1h-1zM3%202h1v1h-1zM7%202h1v1h-1zM2%203h1v1h-1zM8%203h1v1h-1zM1%204h1v1h-1zM5%204h1v1h-1zM9%204h1v1h-1zM1%205h1v1h-1zM4%205h1v1h-1zM5%205h1v1h-1zM6%205h1v1h-1zM9%205h1v1h-1zM1%206h1v1h-1zM5%206h1v1h-1zM9%206h1v1h-1zM2%207h1v1h-1zM8%207h1v1h-1zM3%208h1v1h-1zM7%208h1v1h-1zM4%209h1v1h-1zM5%209h1v1h-1zM6%209h1v1h-1z%27/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap">
+<style>
+/* Layout: arcade cabinet — one 1180px column of "mundos" on CRT black; pixel-notched panels, amber phosphor ink */
+:root{
+  --void:#070403; --ink:#0e0704; --panel:#140a06; --panel-2:#1d0e07; --line:#3a1a0b;
+  --rust:#6e2a0c; --ember:#b4460f; --orange:#ff7a1a; --amber:#ffb04a; --gold:#ffd27f;
+  --cream:#ffe9c4; --hot:#fff8ec;
+  --text:#ffd9a8; --text-dim:#d09a66; --text-faint:#8c5a36;
+  --pos:#f2a93b; --neg:#ee5a24;
+  --scan:rgba(0,0,0,.26); --vignette:rgba(0,0,0,.55); --glow:rgba(255,122,26,.10);
+  --font-display:"Press Start 2P","Courier New",monospace;
+  --font-body:"VT323","Courier New",monospace;
+  --px:3px;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+.tt-none{text-transform:none}
+html{background:var(--void);scroll-behavior:smooth;scroll-padding-top:74px}
+body{margin:0;background-color:var(--void);color:var(--text);font-family:var(--font-body);font-size:22px;line-height:1.22;
+  background-image:repeating-conic-gradient(var(--ink) 0 25%,var(--void) 0 50%);background-size:6px 6px;
+  -webkit-font-smoothing:none;overflow-x:hidden}
+::selection{background:var(--orange);color:var(--void)}
+:focus-visible{outline:3px dashed var(--cream);outline-offset:4px}
+a{color:var(--amber)}
+p{margin:0}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:20px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+canvas{image-rendering:crisp-edges;image-rendering:pixelated;display:block}
+sub,sup{font-size:.72em;line-height:0}
+
+/* ---------- pixel primitives ---------- */
+.px{--bc:var(--line);--sh:var(--ink);background:var(--panel);
+  box-shadow:0 calc(var(--px)*-1) 0 0 var(--bc),0 var(--px) 0 0 var(--bc),calc(var(--px)*-1) 0 0 0 var(--bc),var(--px) 0 0 0 var(--bc),
+    calc(var(--px)*3) calc(var(--px)*3) 0 0 var(--sh)}
+.px-hot{--bc:var(--ember)}
+.ic,.gl{display:inline-block;background:currentColor;-webkit-mask:var(--m) center/100% 100% no-repeat;mask:var(--m) center/100% 100% no-repeat}
+.ic{height:1em;width:calc(1em*var(--ar,1));vertical-align:-.12em}
+.gl{height:.6em;width:calc(.6em*var(--ar,.72));vertical-align:0;margin-inline:.05em}
+.gl{padding:0;border:0}
+.gl.gl-ps{height:1em;width:calc(1em*var(--ar,.72));vertical-align:-.08em}
+
+.btn{--bc:var(--ember);font-family:var(--font-display);font-size:10px;line-height:1.35;letter-spacing:.04em;text-transform:uppercase;
+  color:var(--text);background:var(--panel-2);border:0;padding:10px 12px;margin:var(--px);cursor:pointer;position:relative;
+  box-shadow:0 calc(var(--px)*-1) 0 0 var(--bc),0 var(--px) 0 0 var(--bc),calc(var(--px)*-1) 0 0 0 var(--bc),var(--px) 0 0 0 var(--bc),
+    inset -3px -3px 0 0 var(--ink),inset 3px 3px 0 0 var(--rust);text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.btn:hover{--bc:var(--orange);color:var(--cream)}
+.btn:active{transform:translateY(2px)}
+.btn[aria-pressed="true"]{background:var(--orange);color:var(--void);
+  box-shadow:0 calc(var(--px)*-1) 0 0 var(--bc),0 var(--px) 0 0 var(--bc),calc(var(--px)*-1) 0 0 0 var(--bc),var(--px) 0 0 0 var(--bc),
+    inset -3px -3px 0 0 var(--ember),inset 3px 3px 0 0 var(--gold)}
+.btn:disabled{opacity:.3;cursor:not-allowed;transform:none;--bc:var(--line)}
+.btn.big{font-size:13px;padding:16px 20px}
+.btn.cta{background:var(--orange);color:var(--void);--bc:var(--amber);
+  box-shadow:0 calc(var(--px)*-1) 0 0 var(--bc),0 var(--px) 0 0 var(--bc),calc(var(--px)*-1) 0 0 0 var(--bc),var(--px) 0 0 0 var(--bc),
+    inset -4px -4px 0 0 var(--ember),inset 4px 4px 0 0 var(--gold),8px 8px 0 0 var(--rust)}
+.btn.cta:hover{background:var(--amber)}
+.keys{display:flex;flex-wrap:wrap;gap:4px}
+.keys .btn{min-width:44px;text-transform:none}
+.tag{display:inline-flex;align-items:center;gap:10px;font-family:var(--font-display);font-size:10px;letter-spacing:.06em;color:var(--void);background:var(--amber);padding:8px 10px;text-transform:uppercase}
+.tag.dim{background:var(--rust);color:var(--cream)}
+.label{font-family:var(--font-display);font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim)}
+.disp{font-family:var(--font-display)}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:18px;background:transparent;cursor:pointer}
+input[type=range]::-webkit-slider-runnable-track{height:6px;background:repeating-linear-gradient(90deg,var(--ember) 0 6px,var(--rust) 6px 9px)}
+input[type=range]::-moz-range-track{height:6px;background:repeating-linear-gradient(90deg,var(--ember) 0 6px,var(--rust) 6px 9px)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:15px;height:18px;margin-top:-6px;background:var(--amber);border:0;box-shadow:inset -3px -3px 0 var(--ember),inset 3px 3px 0 var(--cream)}
+input[type=range]::-moz-range-thumb{width:15px;height:18px;border:0;border-radius:0;background:var(--amber);box-shadow:inset -3px -3px 0 var(--ember),inset 3px 3px 0 var(--cream)}
+
+/* ---------- CRT overlay ---------- */
+.crt{position:fixed;inset:0;pointer-events:none;z-index:90;
+  background:repeating-linear-gradient(to bottom,transparent 0 2px,var(--scan) 2px 3px),radial-gradient(ellipse at center,transparent 58%,var(--vignette) 100%)}
+body.crt-off .crt{display:none}
+
+/* ---------- HUD ---------- */
+.hud{position:sticky;top:env(safe-area-inset-top,0px);z-index:60;background:var(--void);border-bottom:3px solid var(--rust)}
+.hud .wrap{display:flex;align-items:center;gap:14px;min-height:56px}
+.hud-logo{font-family:var(--font-display);font-size:11px;color:var(--orange);white-space:nowrap;text-decoration:none;display:flex;gap:8px;align-items:center}
+.hud nav{display:flex;gap:2px;overflow-x:auto;flex:1;min-width:0;scrollbar-width:none}
+.hud nav::-webkit-scrollbar{display:none}
+.hud nav a{font-family:var(--font-display);font-size:8px;color:var(--text-dim);text-decoration:none;padding:9px 8px;white-space:nowrap;letter-spacing:.06em}
+.hud nav a:hover,.hud nav a.active{color:var(--void);background:var(--amber)}
+.hud-tog{display:flex;gap:6px;flex:none}
+.hud-tog .btn{font-size:8px;padding:7px 8px}
+.hiscore{font-family:var(--font-display);font-size:8px;color:var(--gold);white-space:nowrap}
+@media (max-width:760px){.hiscore,.hud-logo span{display:none}}
+
+/* ---------- hero ---------- */
+.hero{padding-block:52px 36px;display:grid;grid-template-columns:minmax(0,1.08fr) minmax(0,.92fr);gap:44px;align-items:center}
+.coin{font-family:var(--font-display);font-size:10px;color:var(--amber);letter-spacing:.1em;animation:blink 1.2s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.logo{margin:14px 0 10px;line-height:0}
+.logo svg{width:100%;height:auto;display:block;overflow:visible}
+.caza{display:flex;align-items:center;gap:12px;margin-top:22px}
+.tagline{font-size:clamp(26px,3vw,34px);line-height:1.1;color:var(--cream);margin-top:18px;text-wrap:balance}
+.hero-sub{max-width:52ch;color:var(--text-dim);margin-top:12px}
+.hero-cta{display:flex;flex-wrap:wrap;gap:18px;margin-top:26px}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,max-content));gap:14px 28px;margin-top:30px}
+.stats div{display:flex;flex-direction:column;gap:6px}
+.stats b{font-family:var(--font-display);font-size:18px;color:var(--orange);font-weight:400}
+.stats div > span{font-size:18px;color:var(--text-faint);line-height:1}
+
+.screen{position:relative;padding:14px;--bc:var(--ember);--sh:var(--rust)}
+.screen-top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
+.led{display:inline-block;width:9px;height:9px;background:var(--orange);box-shadow:0 0 0 3px var(--rust);animation:blink 1.6s steps(1) infinite}
+.screen canvas{width:100%;aspect-ratio:1/1;height:auto;background:var(--void);max-width:100%}
+.screen-cap{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-top:10px;flex-wrap:wrap}
+.screen-cap .nm{font-family:var(--font-display);font-size:14px;color:var(--cream)}
+.screen-cap .ct{font-family:var(--font-display);font-size:9px;color:var(--amber)}
+@media (max-width:860px){.hero{grid-template-columns:1fr;gap:30px}.hero .screen{max-width:460px}}
+
+/* ---------- sections ---------- */
+.level{padding-block:80px 30px;position:relative}
+.level-head{display:flex;flex-direction:column;align-items:flex-start;gap:4px;margin-bottom:28px}
+.level h2{font-family:var(--font-display);font-weight:400;font-size:clamp(19px,3.2vw,32px);line-height:1.4;color:var(--cream);
+  text-shadow:3px 3px 0 var(--ember),6px 6px 0 var(--rust);margin:16px 0 6px;text-wrap:balance}
+.lede{max-width:64ch;font-size:24px;color:var(--text)}
+.fade-bar{height:24px;margin-top:70px;background-repeat:repeat-x;background-size:auto 24px}
+h3{font-family:var(--font-display);font-weight:400;font-size:12px;line-height:1.5;color:var(--amber);margin:0;letter-spacing:.04em;text-transform:uppercase}
+.muted{color:var(--text-dim)}
+.faint{color:var(--text-faint)}
+.hl{color:var(--cream)}
+.pos{color:var(--pos)} .neg{color:var(--neg)}
+.grid-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:28px}
+.grid-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:28px}
+@media (max-width:980px){.grid-3{grid-template-columns:1fr 1fr}}
+@media (max-width:700px){.grid-3,.grid-2{grid-template-columns:1fr}}
+.card{padding:20px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.card p{max-width:60ch}
+.card canvas{width:100%;height:auto;max-width:100%}
+
+/* mundo 1 */
+.eq{font-family:var(--font-display);font-size:clamp(13px,1.6vw,17px);line-height:1.8;color:var(--cream);text-align:center;padding:16px 8px;background:var(--void)}
+.eq .r{color:var(--gold)} .eq .y{color:var(--hot)}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.split > div{background:var(--void);padding:12px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.split b{font-family:var(--font-display);font-weight:400;font-size:9px;color:var(--amber);line-height:1.5}
+.legend{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:19px;color:var(--text-dim);align-items:center}
+.legend i.sw{display:inline-block;width:14px;height:14px;vertical-align:-1px;margin-right:6px}
+.sw-pos{background:var(--pos)} .sw-neg{background:var(--neg)}
+.sw-rad{background:repeating-linear-gradient(90deg,var(--cream) 0 4px,transparent 4px 7px)}
+.sw-ang{background:var(--hot);height:4px!important;vertical-align:4px!important}
+
+/* mundo 2 */
+.rule{padding:22px 20px;display:flex;flex-direction:column;gap:12px;align-items:flex-start}
+.rule .f{font-family:var(--font-display);font-size:clamp(20px,2.6vw,28px);color:var(--cream);text-shadow:3px 3px 0 var(--ember);line-height:1.3;white-space:nowrap}
+.rule .ico{font-size:30px;color:var(--amber);display:flex;gap:6px}
+.ell-map{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+.ell-map > span{font-family:var(--font-display);font-size:10px;padding:10px 12px;background:var(--panel-2);color:var(--text)}
+.ell-map b{color:var(--orange);font-weight:400;font-size:14px;margin-right:4px}
+.calc{margin-top:34px;padding:22px;display:grid;grid-template-columns:minmax(0,300px) minmax(0,1fr);gap:26px;--bc:var(--ember)}
+.calc .ctl{display:flex;flex-direction:column;gap:14px}
+.calc-out{background:var(--void);padding:18px;display:flex;flex-direction:column;gap:14px;min-height:190px;justify-content:center}
+.calc-name{font-family:var(--font-display);font-size:30px;color:var(--cream)}
+.calc-rows{display:flex;flex-direction:column;gap:10px}
+.calc-row{display:grid;grid-template-columns:130px minmax(0,1fr) 44px;gap:10px;align-items:center}
+.calc-row .icons{display:flex;flex-wrap:wrap;gap:6px;font-size:26px;min-height:26px;color:var(--amber)}
+.calc-row .icons.rad{color:var(--cream)} .calc-row .icons.ang{color:var(--hot)}
+.calc-row .num{font-family:var(--font-display);font-size:16px;color:var(--orange);text-align:right}
+.calc-sum{font-size:24px;color:var(--text)}
+.calc-err{font-family:var(--font-display);font-size:11px;line-height:1.8;color:var(--orange);animation:glitch .5s steps(2) 1}
+@keyframes glitch{0%{transform:translate(3px,0)}33%{transform:translate(-3px,1px)}66%{transform:translate(2px,-1px)}100%{transform:none}}
+@media (max-width:760px){.calc{grid-template-columns:1fr}.calc-row{grid-template-columns:96px minmax(0,1fr) 36px}}
+.traps{margin-top:34px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:26px}
+.trap{padding:18px;display:flex;gap:14px;align-items:flex-start;--bc:var(--rust)}
+.trap .ic{font-size:26px;color:var(--orange);flex:none;margin-top:2px}
+.trap h3{margin-bottom:8px}
+.trap p{font-size:20px;color:var(--text-dim)}
+</style>
+<style>
+/* ---------- mundo 3 · nodoscopio ---------- */
+.scope{display:grid;grid-template-columns:300px minmax(0,1fr);grid-template-areas:"ctl view" "hud view";gap:26px;align-items:start}
+.scope-ctl{grid-area:ctl;padding:18px;display:flex;flex-direction:column;gap:16px}
+.scope-hud{grid-area:hud;padding:18px;display:flex;flex-direction:column;gap:14px;--bc:var(--ember)}
+.scope-view{grid-area:view;min-width:0}
+.ctl-group{display:flex;flex-direction:column;gap:8px}
+.orb-keys .btn{text-transform:none;font-size:10px;min-width:0}
+.orb-keys .btn sub,.orb-keys .btn sup{font-size:.8em}
+.view-bar{display:flex;flex-wrap:wrap;gap:6px 4px;align-items:center;margin-top:12px}
+.view-bar .btn{font-size:8px;padding:8px 9px}
+.iso-row{display:grid;grid-template-columns:auto minmax(0,1fr) 52px;gap:12px;align-items:center;margin-top:12px}
+.iso-row output{font-family:var(--font-display);font-size:10px;color:var(--amber);text-align:right}
+.view-wrap{position:relative}
+.view-wrap canvas{width:100%;height:auto;aspect-ratio:1/1;touch-action:none;cursor:grab;background:var(--void)}
+.view-wrap canvas:active{cursor:grabbing}
+.view-wrap .gizmo{position:absolute;left:10px;bottom:10px;width:90px;height:90px;pointer-events:none;background:transparent}
+.view-hint{position:absolute;right:10px;top:10px;font-family:var(--font-display);font-size:8px;color:var(--text-faint);pointer-events:none}
+.nogl{padding:40px 20px;text-align:center;color:var(--text-dim)}
+.orb-name{font-family:var(--font-display);font-size:34px;color:var(--cream);line-height:1.2;text-shadow:3px 3px 0 var(--ember)}
+.orb-name sub{font-size:.5em}
+.qn{display:flex;gap:10px;flex-wrap:wrap}
+.qn > span{font-family:var(--font-display);font-size:9px;background:var(--void);padding:7px 8px;color:var(--text-dim)}
+.qn b{color:var(--amber);font-weight:400}
+.meter{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 10px;align-items:center}
+.meter .k{font-family:var(--font-display);font-size:9px;color:var(--text-dim);line-height:1.6}
+.meter .k small{display:block;color:var(--text-faint);font-size:9px;margin-top:3px}
+.meter .v{font-family:var(--font-display);font-size:20px;color:var(--orange)}
+.meter .bar{grid-column:1/-1;display:flex;gap:5px;font-size:22px;min-height:22px}
+.meter .bar.rad{color:var(--cream)} .meter .bar.ang{color:var(--hot)}
+.surf-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.surf-list li{display:grid;grid-template-columns:36px minmax(0,1fr);gap:8px;align-items:start;font-size:20px;line-height:1.1;color:var(--text)}
+.surf-list li .ic{font-size:16px;margin-top:2px}
+.surf-list li.r .ic{color:var(--cream)} .surf-list li.a .ic{color:var(--hot)}
+.surf-list li em{font-style:normal;color:var(--text-faint)}
+.scope-row2{display:grid;grid-template-columns:minmax(0,400px) minmax(0,1fr);gap:26px;margin-top:30px}
+.panel{padding:18px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.panel-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.slice-wrap{position:relative;padding:22px 22px 26px 26px;background:var(--void)}
+.slice-wrap canvas{width:100%;height:auto;aspect-ratio:1/1}
+.ax{position:absolute;font-family:var(--font-display);font-size:9px;color:var(--text-faint)}
+.ax.h{right:4px;top:50%;transform:translateY(-50%)}
+.ax.v{left:50%;top:4px;transform:translateX(-50%)}
+.slice-msg{position:absolute;inset:22px 22px 26px 26px;display:flex;align-items:center;justify-content:center;text-align:center;padding:18px;
+  font-family:var(--font-display);font-size:10px;line-height:1.9;color:var(--cream);background:var(--void)}
+.slice-msg b{display:block;color:var(--orange);font-size:13px;font-weight:400;margin-bottom:8px}
+.scale-note{font-size:18px;color:var(--text-faint)}
+.chart-wrap{background:var(--void);padding:10px;position:relative}
+.chart-wrap canvas{width:100%;height:auto;aspect-ratio:2/1;cursor:crosshair}
+.readout{font-family:var(--font-display);font-size:9px;color:var(--amber);min-height:14px}
+.nodes-r{display:flex;flex-wrap:wrap;gap:8px}
+.nodes-r > span{font-size:20px;background:var(--panel-2);padding:3px 9px;color:var(--cream)}
+@media (max-width:1020px){.scope{grid-template-columns:1fr;grid-template-areas:"view" "ctl" "hud"}.scope-row2{grid-template-columns:1fr}}
+@media (min-width:700px) and (max-width:1020px){.scope{grid-template-columns:1fr 1fr;grid-template-areas:"view view" "ctl hud"}}
+
+/* ---------- mundo 4 · cebolla ---------- */
+.onion-bar{display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin-bottom:24px}
+.onion{display:grid;grid-template-columns:repeat(var(--cols,7),minmax(0,1fr));gap:20px}
+@media (max-width:1000px){.onion{grid-template-columns:repeat(auto-fill,minmax(130px,1fr))}}
+.bulb{padding:14px;display:flex;flex-direction:column;gap:10px;cursor:pointer;border:0;color:inherit;font:inherit;text-align:left}
+.bulb:hover{--bc:var(--orange)}
+.bulb canvas{width:100%;height:auto;aspect-ratio:1/1;background:var(--void)}
+.bulb .nm{font-family:var(--font-display);font-size:16px;color:var(--cream)}
+.bulb .nn{font-family:var(--font-display);font-size:8px;color:var(--amber);line-height:1.6}
+.bulb .rr{font-size:17px;color:var(--text-faint);line-height:1.05}
+
+/* ---------- mundo 5 · galería ---------- */
+.fam{display:grid;grid-template-columns:170px minmax(0,1fr);gap:24px;align-items:start;padding-block:22px;border-top:3px dashed var(--line)}
+.fam:first-of-type{border-top:0}
+.fam-h{display:flex;flex-direction:column;gap:8px;position:sticky;top:80px}
+.fam-h .big{font-family:var(--font-display);font-size:40px;color:var(--orange);text-shadow:4px 4px 0 var(--rust);line-height:1}
+.fam-h p{font-size:19px;color:var(--text-dim)}
+.fam-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:22px}
+.pick{padding:12px;display:flex;flex-direction:column;gap:8px;cursor:pointer;border:0;color:inherit;font:inherit;text-align:left}
+.pick:hover,.pick:focus-visible{--bc:var(--orange)}
+.pick canvas{width:100%;height:auto;aspect-ratio:1/1;background:var(--void)}
+.pick .nm{font-family:var(--font-display);font-size:13px;color:var(--cream);text-transform:none}
+.pick .nd{font-size:18px;line-height:1.05;color:var(--text-dim)}
+.pick .ics{display:flex;gap:5px;font-size:18px;color:var(--hot);min-height:18px}
+@media (max-width:700px){.fam{grid-template-columns:1fr}.fam-h{position:static;flex-direction:row;align-items:center;gap:16px}}
+
+/* ---------- mundo 6 · tabla ---------- */
+.tbl-scroll{overflow-x:auto;padding:6px 6px 14px}
+table.nt{border-collapse:separate;border-spacing:6px;width:100%;min-width:620px;table-layout:fixed}
+.nt th{font-family:var(--font-display);font-weight:400;font-size:12px;color:var(--amber);padding:10px 6px}
+.nt th.row{font-size:11px;color:var(--text-dim);text-align:right}
+.nt col.rh{width:84px}
+.nt td{background:var(--panel);padding:0;vertical-align:top}
+.nt td button{width:100%;min-height:86px;background:transparent;border:0;color:inherit;font:inherit;cursor:pointer;padding:10px;display:flex;flex-direction:column;gap:6px;align-items:flex-start;text-align:left}
+.nt td button:hover,.nt td button:focus-visible{background:var(--panel-2);box-shadow:inset 0 0 0 3px var(--orange)}
+.nt .cn{font-family:var(--font-display);font-size:13px;color:var(--cream)}
+.nt .ci{display:flex;flex-wrap:wrap;gap:4px;font-size:16px;line-height:1}
+.nt .ci .rad{color:var(--cream)} .nt .ci .ang{color:var(--hot)}
+.nt .cc{font-family:var(--font-display);font-size:8px;color:var(--text-faint)}
+.nt td.x{background:repeating-linear-gradient(45deg,var(--ink) 0 4px,var(--void) 4px 8px)}
+.nt td.x > span{display:block;padding:10px;font-family:var(--font-display);font-size:8px;color:var(--text-faint);line-height:1.7}
+.nt td.hi{box-shadow:inset 0 0 0 3px var(--ember)}
+
+/* ---------- mundo 7 · jefe ---------- */
+.boss{padding:0;--bc:var(--ember);--sh:var(--rust)}
+.boss-hud{display:flex;flex-wrap:wrap;gap:12px 26px;justify-content:space-between;align-items:center;padding:14px 18px;background:var(--void);border-bottom:3px solid var(--line)}
+.boss-hud .hv{font-family:var(--font-display);font-size:10px;color:var(--text-dim);display:flex;gap:8px;align-items:center}
+.boss-hud .hv b{color:var(--gold);font-weight:400}
+.hearts{display:flex;gap:4px;font-size:20px;color:var(--orange)}
+.hearts .ic.off{color:var(--line)}
+.boss-body{padding:26px 22px;display:grid;grid-template-columns:minmax(0,1fr) 250px;gap:28px;min-height:360px}
+.boss-body.nofig{grid-template-columns:1fr}
+.boss-q{display:flex;flex-direction:column;gap:18px;min-width:0}
+.boss-q .qt{font-family:var(--font-display);font-size:clamp(13px,1.7vw,17px);line-height:1.8;color:var(--cream);text-wrap:balance}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.opts .btn{font-size:11px;padding:16px 12px;text-transform:none;justify-content:flex-start;text-align:left}
+.opts .btn .k{color:var(--text-faint);margin-right:4px}
+.opts .btn.ok{background:var(--gold);color:var(--void);--bc:var(--hot)}
+.opts .btn.bad{background:var(--rust);color:var(--cream);--bc:var(--neg)}
+.boss-fig canvas{width:100%;height:auto;aspect-ratio:1/1;background:var(--void)}
+.boss-fig p{font-size:17px;color:var(--text-faint);margin-top:8px}
+.explain{background:var(--void);padding:14px 16px;font-size:21px;color:var(--text);display:flex;flex-direction:column;gap:12px;align-items:flex-start}
+.explain b{font-family:var(--font-display);font-weight:400;font-size:11px}
+.explain b.okt{color:var(--gold)} .explain b.badt{color:var(--neg)}
+.boss-title{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:18px;padding:40px 18px;grid-column:1/-1}
+.boss-title .bt{font-family:var(--font-display);font-size:clamp(22px,4vw,40px);color:var(--orange);text-shadow:4px 4px 0 var(--rust);line-height:1.3}
+.boss-title p{max-width:48ch;color:var(--text-dim)}
+@media (max-width:760px){.boss-body{grid-template-columns:1fr}.opts{grid-template-columns:1fr}}
+
+/* ---------- footer ---------- */
+.cheat{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:24px;margin-top:10px}
+.cheat .px{padding:18px;display:flex;flex-direction:column;gap:8px}
+.cheat .f{font-family:var(--font-display);font-size:18px;color:var(--cream)}
+.foot{padding-block:60px 70px;display:flex;flex-direction:column;align-items:center;gap:18px;text-align:center}
+.foot .go{font-family:var(--font-display);font-size:clamp(16px,2.6vw,24px);color:var(--orange);animation:blink 1.4s steps(1) infinite}
+.foot p{max-width:70ch;color:var(--text-faint);font-size:19px}
+
+@media (max-width:560px){body{font-size:20px}.lede{font-size:21px}.wrap{padding-inline:16px}.level{padding-block:60px 20px}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<div class="crt" aria-hidden="true"></div>
+<header class="hud">
+  <div class="wrap">
+    <a class="hud-logo" href="#start"><i class="ic ic-atom" aria-hidden="true"></i><span>NODE HUNTER</span></a>
+    <nav aria-label="Sections">
+      <a href="#node">1 NODE</a>
+      <a href="#rules">2 RULES</a>
+      <a href="#nodescope">3 NODESCOPE</a>
+      <a href="#radial">4 RADIAL</a>
+      <a href="#angular">5 ANGULAR</a>
+      <a href="#table">6 TABLE</a>
+      <a href="#boss">7 BOSS</a>
+    </nav>
+    <span class="hiscore">HI <span id="hud-hi">000000</span></span>
+    <div class="hud-tog">
+      <button class="btn" id="tog-sound" aria-pressed="false" title="8-bit sound effects">SOUND</button>
+      <button class="btn" id="tog-crt" aria-pressed="true" title="Old-monitor scanlines">CRT</button>
+    </div>
+  </div>
+</header>
+
+<main>
+<section class="wrap hero" id="start">
+  <div>
+    <div class="coin">INSERT COIN · 1 CREDIT</div>
+    <div class="caza"><span class="tag">HUNT THE</span><span class="label">radial × angular nodes</span></div>
+    <h1 class="logo" id="logo" aria-label="Nodes">NODES</h1>
+    <p class="tagline">Where ψ = 0, the electron is never found.</p>
+    <p class="hero-sub">A playable guide to counting, seeing and understanding the nodes of s, p, d and f orbitals. Spin the orbitals, slice them in half and light up their nodal surfaces.</p>
+    <div class="hero-cta">
+      <a class="btn cta big" href="#node"><i class="ic ic-play" aria-hidden="true"></i>START</a>
+      <a class="btn big" href="#nodescope">GO TO THE NODESCOPE</a>
+    </div>
+    <div class="stats">
+      <div><b>4</b><span>types: s p d f</span></div>
+      <div><b>16</b><span>orbital shapes</span></div>
+      <div><b>3</b><span>rules to count nodes</span></div>
+    </div>
+  </div>
+  <figure class="screen px" style="margin:0">
+    <div class="screen-top"><span class="label">demo mode</span><span class="led" aria-hidden="true"></span></div>
+    <canvas id="attract" width="150" height="150" aria-label="Demo: rotating orbitals with their nodal surfaces"></canvas>
+    <figcaption class="screen-cap"><span class="nm" id="att-name">3d</span><span class="ct" id="att-count">RAD 0 · ANG 2</span></figcaption>
+  </figure>
+</section>
+
+<section class="wrap level" id="node">
+  <div class="level-head">
+    <span class="tag">WORLD 1</span>
+    <h2>What is a node?</h2>
+    <p class="lede">A node is a place where the wavefunction is exactly zero: ψ = 0. The probability of finding the electron is |ψ|², so at a node that probability is zero too. The electron can be on either side of a node, but never right on it.</p>
+  </div>
+  <div class="grid-3">
+    <article class="card px">
+      <span class="tag dim">1D · the string</span>
+      <canvas id="string" width="160" height="72" aria-label="Vibrating string with its nodes marked"></canvas>
+      <div class="ctl-group">
+        <span class="label">nodes on the string</span>
+        <div class="keys" id="str-k" role="group" aria-label="Number of nodes on the string"></div>
+      </div>
+      <p>A guitar string vibrates in standing waves. The points that never move are its nodes. Every extra node costs energy, so the pitch goes up.</p>
+      <p class="muted">The fixed ends don't count as nodes, just like r = ∞ in an atom.</p>
+    </article>
+    <article class="card px">
+      <span class="tag dim">2D · the drum</span>
+      <canvas id="drum" width="80" height="80" aria-label="Vibrating drumhead with its nodal lines"></canvas>
+      <div class="ctl-group">
+        <span class="label">nodal circles</span>
+        <div class="keys" id="drum-c" role="group" aria-label="Nodal circles"></div>
+      </div>
+      <div class="ctl-group">
+        <span class="label">nodal diameters</span>
+        <div class="keys" id="drum-m" role="group" aria-label="Nodal diameters"></div>
+      </div>
+      <p>On a drumhead the nodes are lines, and they come in two kinds: <span class="hl">circles</span>, which depend on the distance from the center, and <span class="hl">diameters</span>, which depend on the angle.</p>
+    </article>
+    <article class="card px px-hot">
+      <span class="tag">3D · the atom</span>
+      <div class="eq disp">ψ(r,θ,φ)<br>= <span class="r">R(r)</span> · <span class="y">Y(θ,φ)</span></div>
+      <div class="split">
+        <div><b>R(r) = 0</b><span class="hl">radial node</span><span class="muted">a sphere</span><i class="ic ic-ring" style="font-size:28px;color:var(--cream)" aria-hidden="true"></i></div>
+        <div><b>Y(θ,φ) = 0</b><span class="hl">angular node</span><span class="muted">a plane or a cone</span><span style="display:flex;gap:8px;font-size:28px;color:var(--hot)"><i class="ic ic-plane" aria-hidden="true"></i><i class="ic ic-cone" aria-hidden="true"></i></span></div>
+      </div>
+      <p>In 3D, nodes are surfaces. The drum's circle becomes a sphere; its diameter becomes a plane or a cone.</p>
+      <div class="legend"><span><i class="sw sw-pos"></i>phase +</span><span><i class="sw sw-neg"></i>phase −</span></div>
+      <p class="muted">Color shows the sign of ψ. Crossing a node flips the sign.</p>
+    </article>
+  </div>
+  <div class="fade-bar" aria-hidden="true"></div>
+</section>
+
+<section class="wrap level" id="rules">
+  <div class="level-head">
+    <span class="tag">WORLD 2</span>
+    <h2>The rules of the game</h2>
+    <p class="lede">Two quantum numbers decide everything. <span class="hl">n</span> sets how many nodes there are in total; <span class="hl">ℓ</span> decides how many of them are angular. The rest are radial.</p>
+  </div>
+  <div class="grid-3">
+    <div class="rule px"><span class="label">total nodes</span><span class="f">n − 1</span><p class="muted">Grows with the shell: 1s has 0 nodes, 7s has 6.</p></div>
+    <div class="rule px px-hot"><span class="label">angular nodes</span><span class="f">ℓ</span><span class="ico" style="color:var(--hot)"><i class="ic ic-plane" aria-hidden="true"></i><i class="ic ic-cone" aria-hidden="true"></i></span><p class="muted">Planes or cones. They depend only on the shape: s has 0, p 1, d 2, f 3.</p></div>
+    <div class="rule px"><span class="label">radial nodes</span><span class="f">n − ℓ − 1</span><span class="ico" style="color:var(--cream)"><i class="ic ic-ring" aria-hidden="true"></i></span><p class="muted">Spheres. They're what's left: the total minus the angular ones.</p></div>
+  </div>
+  <div class="ell-map">
+    <span><b>s</b> ℓ = 0</span><span><b>p</b> ℓ = 1</span><span><b>d</b> ℓ = 2</span><span><b>f</b> ℓ = 3</span><span>ℓ runs from 0 to n − 1</span>
+  </div>
+  <div class="calc px">
+    <div class="ctl">
+      <h3>Node calculator</h3>
+      <div class="ctl-group"><span class="label">n · shell</span><div class="keys" id="calc-n" role="group" aria-label="Quantum number n"></div></div>
+      <div class="ctl-group"><span class="label">ℓ · subshell</span><div class="keys" id="calc-l" role="group" aria-label="Quantum number ℓ"></div></div>
+    </div>
+    <div class="calc-out" id="calc-out" aria-live="polite"></div>
+  </div>
+  <div class="traps">
+    <div class="trap px"><i class="ic ic-warn" aria-hidden="true"></i><div><h3>The nucleus doesn't count</h3><p>In p, d and f orbitals, ψ = 0 at r = 0. But that's a point, not a surface, so it isn't a radial node.</p></div></div>
+    <div class="trap px"><i class="ic ic-warn" aria-hidden="true"></i><div><h3>Neither does infinity</h3><p>Far from the atom ψ gets close to zero, but it never crosses to the other sign. There's no node out there.</p></div></div>
+    <div class="trap px"><i class="ic ic-warn" aria-hidden="true"></i><div><h3><span class="tt-none">d<sub>z²</sub></span> has no nodal planes</h3><p>Its 2 angular nodes are cones, at 54.7° and 125.3° from the z axis.</p></div></div>
+    <div class="trap px"><i class="ic ic-warn" aria-hidden="true"></i><div><h3>Radial nodes hide inside</h3><p>From the outside, 1s and 2s look like the same sphere. You only see the inner shell if you cut the orbital open.</p></div></div>
+    <div class="trap px"><i class="ic ic-warn" aria-hidden="true"></i><div><h3>Phase is not charge</h3><p>+ and − are the sign of ψ, not electric charges. |ψ|² is always positive.</p></div></div>
+    <div class="trap px"><i class="ic ic-warn" aria-hidden="true"></i><div><h3>Same n, same total</h3><p>3s, 3p and 3d have 2 nodes each. Only the split between spheres and planes or cones changes.</p></div></div>
+  </div>
+  <div class="fade-bar" aria-hidden="true"></div>
+</section>
+
+<section class="wrap level" id="nodescope">
+  <div class="level-head">
+    <span class="tag">WORLD 3</span>
+    <h2>Nodescope</h2>
+    <p class="lede">Pick n, ℓ and the orientation. Drag to spin the orbital, cut it open to see the inner layers, and light up its nodal surfaces.</p>
+  </div>
+  <div class="scope">
+    <div class="scope-ctl px">
+      <div class="ctl-group"><span class="label">n · shell</span><div class="keys" id="ex-n" role="group" aria-label="Quantum number n"></div></div>
+      <div class="ctl-group"><span class="label">ℓ · subshell</span><div class="keys" id="ex-l" role="group" aria-label="Quantum number ℓ"></div></div>
+      <div class="ctl-group"><span class="label">orbital</span><div class="keys orb-keys" id="ex-m" role="group" aria-label="Orbital orientation"></div></div>
+    </div>
+    <div class="scope-view">
+      <div class="screen px">
+        <div class="screen-top"><span class="label">nodescope 3D</span><span class="led" aria-hidden="true"></span></div>
+        <div class="view-wrap" id="view-wrap">
+          <canvas id="view3d" width="180" height="180" aria-label="3D orbital; drag to rotate it"></canvas>
+          <canvas class="gizmo" id="gizmo" width="30" height="30" aria-hidden="true"></canvas>
+          <span class="view-hint" aria-hidden="true">DRAG TO ROTATE</span>
+        </div>
+        <div class="view-bar" role="group" aria-label="3D view options">
+          <button class="btn" id="v-spin" aria-pressed="true">SPIN</button>
+          <button class="btn" id="v-cut0" aria-pressed="false">NO CUT</button>
+          <button class="btn" id="v-cut1" aria-pressed="true">HALF</button>
+          <button class="btn" id="v-cut2" aria-pressed="false">OCTANT</button>
+          <button class="btn" id="v-sheets" aria-pressed="true">NODAL SURFACES</button>
+          <button class="btn" id="v-hatch" aria-pressed="false" title="Adds a hatch pattern to the negative phase">HATCH −</button>
+        </div>
+        <div class="iso-row"><label class="label" for="v-iso">surface</label><input type="range" id="v-iso" min="50" max="95" step="5" value="85"><output id="v-iso-o" for="v-iso">85%</output></div>
+        <p class="scale-note">The surface encloses that percentage of the probability of finding the electron. Cream dots: radial node. White stripes: angular node.</p>
+      </div>
+    </div>
+    <aside class="scope-hud px" aria-live="polite">
+      <div class="orb-name" id="hud-name">4p</div>
+      <div class="qn" id="hud-qn"></div>
+      <div class="meter">
+        <span class="k">radial<small>n − ℓ − 1</small></span><span class="v" id="hud-r">0</span>
+        <div class="bar rad" id="hud-rbar"></div>
+        <span class="k">angular<small>ℓ</small></span><span class="v" id="hud-a">0</span>
+        <div class="bar ang" id="hud-abar"></div>
+        <span class="k">total<small>n − 1</small></span><span class="v" id="hud-t">0</span>
+      </div>
+      <ul class="surf-list" id="hud-surf"></ul>
+      <div class="legend"><span><i class="sw sw-pos"></i>phase +</span><span><i class="sw sw-neg"></i>phase −</span></div>
+    </aside>
+  </div>
+
+  <div class="scope-row2">
+    <div class="panel px">
+      <div class="panel-head"><h3>2D slice</h3><div class="keys" id="sl-plane" role="group" aria-label="Slice plane"></div></div>
+      <div class="slice-wrap">
+        <canvas id="slice" width="128" height="128" aria-label="2D slice of the orbital"></canvas>
+        <span class="ax h" id="ax-h">x</span><span class="ax v" id="ax-v">z</span>
+        <div class="slice-msg" id="slice-msg" hidden></div>
+      </div>
+      <div class="iso-row"><label class="label" for="sl-zoom">zoom</label><input type="range" id="sl-zoom" min="1" max="6" step="0.5" value="1"><output id="sl-zoom-o" for="sl-zoom">1×</output></div>
+      <div class="panel-head"><button class="btn" id="sl-mark" aria-pressed="true">MARK NODES</button>
+        <div class="legend"><span><i class="sw sw-rad"></i>radial</span><span><i class="sw sw-ang"></i>angular</span></div></div>
+    </div>
+    <div class="panel px">
+      <div class="panel-head"><h3>Radial function</h3>
+        <div class="keys" role="group" aria-label="What to plot">
+          <button class="btn" id="rc-p" aria-pressed="true">r²R²</button><button class="btn" id="rc-r" aria-pressed="false">R(r)</button>
+          <button class="btn" id="rc-lin" aria-pressed="true">LINEAR</button><button class="btn" id="rc-sqrt" aria-pressed="false">√r</button>
+        </div>
+      </div>
+      <div class="chart-wrap"><canvas id="radial" width="256" height="128" aria-label="Radial function chart with its nodes"></canvas></div>
+      <div class="readout" id="rad-read" aria-live="off">HOVER OVER THE CHART</div>
+      <div class="nodes-r" id="rad-nodes"></div>
+      <p class="scale-note" id="rad-note">Every time R(r) crosses zero there is a radial node: a sphere of that radius. Distances in Bohr radii (a<sub>0</sub>) for hydrogen.</p>
+    </div>
+  </div>
+  <div class="fade-bar" aria-hidden="true"></div>
+</section>
+
+<section class="wrap level" id="radial">
+  <div class="level-head">
+    <span class="tag">WORLD 4</span>
+    <h2>Radial nodes: onion layers</h2>
+    <p class="lede">R(r) is a polynomial of degree n − ℓ − 1 times a decaying exponential. That polynomial crosses zero n − ℓ − 1 times, and each crossing is a nodal sphere. As n goes up, more layers appear, one inside the other.</p>
+  </div>
+  <div class="onion-bar">
+    <span class="label">pick ℓ</span><div class="keys" id="on-l" role="group" aria-label="Subshell"></div>
+    <span class="scale-note">√r scale: the center is stretched so the inner nodes are visible. Tap one to open it in the Nodescope.</span>
+  </div>
+  <div class="onion" id="onion"></div>
+  <div class="fade-bar" aria-hidden="true"></div>
+</section>
+
+<section class="wrap level" id="angular">
+  <div class="level-head">
+    <span class="tag">WORLD 5</span>
+    <h2>Angular nodes: planes and cones</h2>
+    <p class="lede">Y(θ,φ) doesn't depend on distance, so its nodes pass through the nucleus and cut all the way through the orbital: they are planes or cones. There are exactly ℓ of them, whatever n is. These are the 16 shapes with no radial nodes (n = ℓ + 1). Tap one to open it in the Nodescope.</p>
+  </div>
+  <div id="gallery"></div>
+  <div class="fade-bar" aria-hidden="true"></div>
+</section>
+
+<section class="wrap level" id="table">
+  <div class="level-head">
+    <span class="tag">WORLD 6</span>
+    <h2>The node table</h2>
+    <p class="lede">Walk along a row: the total n − 1 stays the same, but every step to the right turns a radial node into an angular one.</p>
+  </div>
+  <div class="legend" style="margin-bottom:10px"><span style="color:var(--cream)"><i class="ic ic-ring" aria-hidden="true"></i> radial node</span><span style="color:var(--hot)"><i class="ic ic-bar" aria-hidden="true"></i> angular node</span><span>hatched cell: that orbital doesn't exist (ℓ ≥ n)</span></div>
+  <div class="tbl-scroll"><table class="nt" id="ntable"></table></div>
+  <div class="fade-bar" aria-hidden="true"></div>
+</section>
+
+<section class="wrap level" id="boss">
+  <div class="level-head">
+    <span class="tag">WORLD 7</span>
+    <h2>Final boss</h2>
+    <p class="lede">Ten questions, three lives. Every correct answer in a row multiplies your points. You can answer with the 1 to 4 keys.</p>
+  </div>
+  <div class="boss px">
+    <div class="boss-hud">
+      <div class="hv">LIVES <span class="hearts" id="q-hearts"></span></div>
+      <div class="hv">QUESTION <b id="q-round">0/10</b></div>
+      <div class="hv">STREAK <b id="q-streak">×1</b></div>
+      <div class="hv">SCORE <b id="q-score">000000</b></div>
+    </div>
+    <div class="boss-body nofig" id="q-body"></div>
+  </div>
+</section>
+
+<section class="wrap level" id="cheat">
+  <div class="level-head">
+    <span class="tag dim">keep this</span>
+    <h2>Cheat sheet</h2>
+  </div>
+  <div class="cheat">
+    <div class="px"><span class="label">total</span><span class="f">n − 1</span><p class="muted">Every node in the orbital.</p></div>
+    <div class="px"><span class="label">angular</span><span class="f">ℓ</span><p class="muted">Planes or cones through the nucleus.</p></div>
+    <div class="px"><span class="label">radial</span><span class="f">n − ℓ − 1</span><p class="muted">Spheres centered on the nucleus.</p></div>
+    <div class="px"><span class="label">example</span><span class="f">5d</span><p class="muted">5 − 1 = 4 nodes: 2 angular and 5 − 2 − 1 = 2 radial.</p></div>
+  </div>
+</section>
+</main>
+
+<footer class="wrap foot">
+  <div class="go">THANKS FOR PLAYING</div>
+  <p>Real hydrogen-like orbitals (Z = 1), computed in your browser from R(r) · Y(θ,φ). Distances in Bohr radii (a<sub>0</sub> = 52.9 pm). In atoms with more electrons the distances change, but the number and type of nodes do not.</p>
+  <a class="btn" href="#start">BACK TO THE TOP</a>
+</footer>
+<script>
+"use strict";
+/* ================= palette (indexed, 16 colors) ================= */
+const PAL = ["#070403","#140905","#26120a","#3d2004","#7a4506","#c07a0a","#f2a93b","#ffd27f",
+             "#fff0cc","#3a1006","#72220b","#b23a12","#ee5a24","#ff8e4a","#ffbd7a","#fff8ec"];
+const PAL_RGB = PAL.map(h => [parseInt(h.slice(1,3),16), parseInt(h.slice(3,5),16), parseInt(h.slice(5,7),16)]);
+const RAMP_POS = [3,4,5,6,7,8], RAMP_NEG = [9,10,11,12,13,14];
+const NODE_R = 8, NODE_A = 15;
+const BAYER4 = [0,8,2,10, 12,4,14,6, 3,11,1,9, 15,7,13,5].map(v => v/16);
+const bayer = (x,y) => BAYER4[(y&3)*4 + (x&3)];
+const REDUCED = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* ================= orbitals ================= */
+const LETTER = ["s","p","d","f"];
+// id, l, html label, plain label, m description, angular polynomial, nodal surfaces
+const ORBS = [
+  {id:0,  l:0, h:"s", t:"s", m:"0", nodes:[]},
+  {id:1,  l:1, h:"p<sub>x</sub>", t:"px", m:"+1 (cos)", nodes:[["plane","yz plane","x = 0"]]},
+  {id:2,  l:1, h:"p<sub>y</sub>", t:"py", m:"−1 (sin)", nodes:[["plane","xz plane","y = 0"]]},
+  {id:3,  l:1, h:"p<sub>z</sub>", t:"pz", m:"0", nodes:[["plane","xy plane","z = 0"]]},
+  {id:4,  l:2, h:"d<sub>z²</sub>", t:"dz²", m:"0", nodes:[["cone","cone","θ = 54.7°"],["cone","cone","θ = 125.3°"]]},
+  {id:5,  l:2, h:"d<sub>xz</sub>", t:"dxz", m:"+1 (cos)", nodes:[["plane","yz plane","x = 0"],["plane","xy plane","z = 0"]]},
+  {id:6,  l:2, h:"d<sub>yz</sub>", t:"dyz", m:"−1 (sin)", nodes:[["plane","xz plane","y = 0"],["plane","xy plane","z = 0"]]},
+  {id:7,  l:2, h:"d<sub>xy</sub>", t:"dxy", m:"−2 (sin)", nodes:[["plane","yz plane","x = 0"],["plane","xz plane","y = 0"]]},
+  {id:8,  l:2, h:"d<sub>x²−y²</sub>", t:"dx²−y²", m:"+2 (cos)", nodes:[["plane","diagonal plane","y = x"],["plane","diagonal plane","y = −x"]]},
+  {id:9,  l:3, h:"f<sub>z³</sub>", t:"fz³", m:"0", nodes:[["plane","xy plane","z = 0"],["cone","cone","θ = 39.2°"],["cone","cone","θ = 140.8°"]]},
+  {id:10, l:3, h:"f<sub>xz²</sub>", t:"fxz²", m:"+1 (cos)", nodes:[["plane","yz plane","x = 0"],["cone","cone","θ = 63.4°"],["cone","cone","θ = 116.6°"]]},
+  {id:11, l:3, h:"f<sub>yz²</sub>", t:"fyz²", m:"−1 (sin)", nodes:[["plane","xz plane","y = 0"],["cone","cone","θ = 63.4°"],["cone","cone","θ = 116.6°"]]},
+  {id:12, l:3, h:"f<sub>xyz</sub>", t:"fxyz", m:"−2 (sin)", nodes:[["plane","yz plane","x = 0"],["plane","xz plane","y = 0"],["plane","xy plane","z = 0"]]},
+  {id:13, l:3, h:"f<sub>z(x²−y²)</sub>", t:"fz(x²−y²)", m:"+2 (cos)", nodes:[["plane","xy plane","z = 0"],["plane","diagonal plane","y = x"],["plane","diagonal plane","y = −x"]]},
+  {id:14, l:3, h:"f<sub>x(x²−3y²)</sub>", t:"fx(x²−3y²)", m:"+3 (cos)", nodes:[["plane","vertical plane","φ = 30°"],["plane","yz plane","φ = 90°"],["plane","vertical plane","φ = 150°"]]},
+  {id:15, l:3, h:"f<sub>y(3x²−y²)</sub>", t:"fy(3x²−y²)", m:"−3 (sin)", nodes:[["plane","xz plane","φ = 0°"],["plane","vertical plane","φ = 60°"],["plane","vertical plane","φ = 120°"]]},
+];
+const ORBS_BY_L = [0,1,2,3].map(l => ORBS.filter(o => o.l === l));
+const DEFAULT_ORB = [0,3,4,9]; // m = 0 member of each family
+
+function angP(id, x, y, z){
+  switch(id){
+    case 0: return 1;
+    case 1: return x; case 2: return y; case 3: return z;
+    case 4: return 2*z*z - x*x - y*y;
+    case 5: return x*z; case 6: return y*z; case 7: return x*y; case 8: return x*x - y*y;
+    case 9: return z*(2*z*z - 3*x*x - 3*y*y);
+    case 10: return x*(4*z*z - x*x - y*y);
+    case 11: return y*(4*z*z - x*x - y*y);
+    case 12: return x*y*z;
+    case 13: return z*(x*x - y*y);
+    case 14: return x*(x*x - 3*y*y);
+    default: return y*(3*x*x - y*y);
+  }
+}
+// generalized Laguerre L_k^(a)(x)
+function lag(k, a, x){
+  if(k === 0) return 1;
+  let L0 = 1, L1 = 1 + a - x;
+  for(let i = 1; i < k; i++){ const L2 = ((2*i + 1 + a - x)*L1 - (i + a)*L0)/(i + 1); L0 = L1; L1 = L2; }
+  return L1;
+}
+function fact(k){ let f = 1; for(let i = 2; i <= k; i++) f *= i; return f; }
+// normalized hydrogen radial function, Z = 1, r in a0
+function radialR(n, l, r){
+  const rho = 2*r/n;
+  const N = Math.sqrt(Math.pow(2/n,3) * fact(n-l-1) / (2*n*fact(n+l)));
+  return N * Math.pow(rho, l) * Math.exp(-rho/2) * lag(n-l-1, 2*l+1, rho);
+}
+// unnormalized psi used by every view (same formula as the shader)
+function psiRaw(n, l, id, x, y, z){
+  const r = Math.sqrt(x*x + y*y + z*z);
+  return angP(id, x, y, z) * Math.exp(-r/n) * lag(n-l-1, 2*l+1, 2*r/n);
+}
+const cache = new Map();
+function radialInfo(n, l){
+  const key = n + "," + l;
+  if(cache.has(key)) return cache.get(key);
+  // radial nodes = roots of L_{n-l-1}^{(2l+1)}(2r/n)
+  const k = n - l - 1, a = 2*l + 1, nodes = [];
+  if(k > 0){
+    const xmax = 4*k + 2*a + 12, steps = 6000;
+    let x0 = 1e-9, f0 = lag(k, a, x0);
+    for(let i = 1; i <= steps; i++){
+      const x1 = xmax*i/steps, f1 = lag(k, a, x1);
+      if(f0 === 0 || f0*f1 < 0){
+        let lo = x0, hi = x1, flo = f0;
+        for(let j = 0; j < 60; j++){ const mid = (lo+hi)/2, fm = lag(k, a, mid); if(flo*fm <= 0){ hi = mid; } else { lo = mid; flo = fm; } }
+        nodes.push(n*(lo+hi)/4);
+      }
+      x0 = x1; f0 = f1;
+    }
+  }
+  // cumulative radial probability to find the extent
+  const rMax = 4*n*n + 12, M = 4000, dr = rMax/M;
+  let cum = 0, total = 0; const P = new Float64Array(M+1);
+  for(let i = 0; i <= M; i++){ const r = i*dr, R = radialR(n,l,r); P[i] = r*r*R*R; total += P[i]; }
+  let r995 = rMax, r99 = rMax;
+  for(let i = 0; i <= M; i++){ cum += P[i]; if(r99 === rMax && cum >= 0.99*total) r99 = i*dr; if(cum >= 0.995*total){ r995 = i*dr; break; } }
+  const info = {nodes, r99, r995};
+  cache.set(key, info);
+  return info;
+}
+const fmt = (v, d=1) => v.toFixed(d).replace("-", "−");
+function orbHTML(n, id){ return n + ORBS[id].h; }
+function orbText(n, id){ return n + ORBS[id].t; }
+function nodeSummary(id){
+  const nd = ORBS[id].nodes; if(!nd.length) return "no angular nodes";
+  const p = nd.filter(x => x[0] === "plane").length, c = nd.filter(x => x[0] === "cone").length;
+  const parts = [];
+  if(p) parts.push(p + (p === 1 ? " plane" : " planes"));
+  if(c) parts.push(c + " cones");
+  return parts.join(" + ");
+}
+
+/* ================= pixel glyphs & icons (CSS masks) ================= */
+const BITMAPS = {
+  "ψ":["..#..","#.#.#","#.#.#","#.#.#",".###.","..#..","..#.."],
+  "θ":[".###.","#...#","#...#","#####","#...#","#...#",".###."],
+  "φ":["..#..",".###.","#.#.#","#.#.#","#.#.#",".###.","..#.."],
+  "ℓ":["..#..",".#.#.",".#.#.",".##..",".#...",".#..#","..##."],
+  "−":[".....",".....",".....","#####",".....",".....","....."],
+  "→":[".....","..#..","...#.","#####","...#.","..#..","....."],
+  "≈":[".....",".....",".##.#","#..#.",".##.#","#..#.","....."],
+  "√":["...##","...#.","...#.","#..#.",".#.#.",".##..","..#.."],
+  "≥":["#....",".##..","...##",".##..","#....",".....","#####"],
+};
+const ICONS = {
+  ring:["..###..",".#...#.","#.....#","#.....#","#.....#",".#...#.","..###.."],
+  plane:["...#####","..#...#.",".#...#..","#####..."],
+  cone:[".#####.","#.....#",".#####.",".#...#.","..#.#..","..#.#..","...#..."],
+  bar:["###","###","###","###","###","###","###"],
+  heart:[".##.##.","#######","#######",".#####.","..###..","...#..."],
+  play:["#....","##...","###..","####.","###..","##...","#...."],
+  warn:["....#....","...###...","..##.##..","..##.##..",".###.###.",".#######.","####.####","#########"],
+  atom:["...###...","..#...#..",".#.....#.","#...#...#","#..###..#","#...#...#",".#.....#.","..#...#..","...###..."],
+  star:["...#...","...#...","..###..","#######",".#####.",".##.##.","#.....#"],
+  skull:[".#####.","#######","#..#..#","#######",".##.##.",".#.#.#."],
+};
+function maskURL(rows){
+  const h = rows.length, w = rows[0].length; let r = "";
+  rows.forEach((row, y) => { for(let x = 0; x < w; x++) if(row[x] === "#") r += `<rect x='${x}' y='${y}' width='1.02' height='1.02'/>`; });
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 ${w} ${h}' shape-rendering='crispEdges'>${r}</svg>`;
+  return `url("data:image/svg+xml;utf8,${encodeURIComponent(svg)}")`;
+}
+(function installMasks(){
+  let css = "";
+  for(const [name, rows] of Object.entries(ICONS)) css += `.ic-${name}{--m:${maskURL(rows)};--ar:${(rows[0].length/rows.length).toFixed(3)}}\n`;
+  let i = 0;
+  for(const [ch, rows] of Object.entries(BITMAPS)){ css += `.gl-${i}{--m:${maskURL(rows)};--ar:${(rows[0].length/rows.length).toFixed(3)}}\n`; BITMAPS[ch].cls = "gl-" + i; i++; }
+  const st = document.createElement("style"); st.textContent = css; document.head.appendChild(st);
+})();
+const GLYPH_RE = new RegExp("[" + Object.keys(BITMAPS).join("") + "]", "g");
+function glyphify(root){
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {acceptNode(nd){
+    const p = nd.parentElement; if(!p || p.closest("script,style,canvas,svg,title,textarea,option,.gl")) return NodeFilter.FILTER_REJECT;
+    GLYPH_RE.lastIndex = 0; return GLYPH_RE.test(nd.nodeValue) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP; }});
+  const list = []; while(walker.nextNode()) list.push(walker.currentNode);
+  for(const nd of list){
+    const frag = document.createDocumentFragment(), s = nd.nodeValue; let last = 0;
+    const ps = /Press Start/.test(getComputedStyle(nd.parentElement).fontFamily);
+    s.replace(GLYPH_RE, (ch, idx) => {
+      if(idx > last) frag.appendChild(document.createTextNode(s.slice(last, idx)));
+      const sp = document.createElement("span"); sp.className = "gl " + BITMAPS[ch].cls + (ps ? " gl-ps" : ""); sp.setAttribute("role","img"); sp.setAttribute("aria-label", ch);
+      frag.appendChild(sp); last = idx + 1; return ch;
+    });
+    if(last < s.length) frag.appendChild(document.createTextNode(s.slice(last)));
+    nd.parentNode.replaceChild(frag, nd);
+  }
+}
+const icon = (name, cls="") => `<i class="ic ic-${name} ${cls}" aria-hidden="true"></i>`;
+
+/* ================= micro pixel font for canvas labels (3x5) ================= */
+const MICRO = {"0":"111101101101111","1":"010110010010111","2":"111001111100111","3":"111001111001111","4":"101101111001001",
+  "5":"111100111001111","6":"111100111101111","7":"111001001010010","8":"111101111101111","9":"111101111001111",
+  ".":"000000000000010","-":"000000111000000","x":"000101010101000","y":"101101011001110","z":"111001010100111","r":"000110101100100","+":"000010111010000"};
+function microText(ctx, str, x, y, color){
+  ctx.fillStyle = color; let cx = x;
+  for(const ch of str){ const g = MICRO[ch]; if(g){ for(let i = 0; i < 15; i++) if(g[i] === "1") ctx.fillRect(cx + i%3, y + ((i/3)|0), 1, 1); } cx += 4; }
+  return cx - x;
+}
+
+/* ================= helpers ================= */
+function makeKeys(container, items, onPick){
+  container.innerHTML = "";
+  return items.map((it, i) => {
+    const b = document.createElement("button");
+    b.className = "btn"; b.type = "button"; b.innerHTML = it.html; b.setAttribute("aria-pressed","false");
+    if(it.title) b.title = it.title;
+    b.addEventListener("click", () => { sfx("blip"); onPick(it.value, i); });
+    container.appendChild(b); return b;
+  });
+}
+function pressOnly(buttons, idx){ buttons.forEach((b, i) => b.setAttribute("aria-pressed", String(i === idx))); }
+function onVisible(el, cb){
+  if(!("IntersectionObserver" in window)){ cb(true); return; }
+  new IntersectionObserver(es => es.forEach(e => cb(e.isIntersecting)), {rootMargin:"120px"}).observe(el);
+}
+function ditherStrip(c1, c2, w=16, h=24){
+  const cv = document.createElement("canvas"); cv.width = w; cv.height = h;
+  const ctx = cv.getContext("2d");
+  for(let y = 0; y < h; y++) for(let x = 0; x < w; x++){
+    const t = y/(h-1); ctx.fillStyle = (t < bayer(x,y)*0.96 + 0.02) ? c1 : c2; ctx.fillRect(x,y,1,1);
+  }
+  return cv.toDataURL();
+}
+
+/* ================= 8-bit sound ================= */
+let AC = null, SOUND = false;
+function sfx(kind){
+  if(!SOUND) return;
+  try{
+    AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+    const seq = {blip:[[880,.04]], ok:[[988,.07],[1319,.12]], bad:[[196,.1],[147,.18]], start:[[523,.07],[659,.07],[784,.07],[1047,.14]],
+                 win:[[523,.1],[659,.1],[784,.1],[1047,.1],[784,.08],[1047,.25]], over:[[392,.14],[330,.14],[262,.14],[196,.3]]}[kind] || [[660,.05]];
+    let t = AC.currentTime;
+    for(const [f, d] of seq){
+      const o = AC.createOscillator(), g = AC.createGain();
+      o.type = "square"; o.frequency.value = f; g.gain.setValueAtTime(0.06, t); g.gain.exponentialRampToValueAtTime(0.001, t + d);
+      o.connect(g); g.connect(AC.destination); o.start(t); o.stop(t + d); t += d;
+    }
+  }catch(e){}
+}
+const store = {
+  get(k, d){ try{ const v = localStorage.getItem("nodehunter." + k); return v === null ? d : JSON.parse(v); }catch(e){ return d; } },
+  set(k, v){ try{ localStorage.setItem("nodehunter." + k, JSON.stringify(v)); }catch(e){} }
+};
+</script>
+<script>
+/* ================= 3D: raymarched isosurfaces, palette-quantized with ordered dithering ================= */
+const VS = "attribute vec2 a;void main(){gl_Position=vec4(a,0.0,1.0);}";
+const FS = `
+#ifdef GL_FRAGMENT_PRECISION_HIGH
+precision highp float;
+#else
+precision mediump float;
+#endif
+uniform vec2 uRes;
+uniform float uView, uRb, uRs, uNf, uK, uA, uIso, uScale, uFade;
+uniform int uOrb, uCut, uSheets, uHatch;
+uniform vec3 uR, uU, uB;
+uniform sampler2D uPal;
+#define STEPS 150
+vec3 pal(float i){ return texture2D(uPal, vec2((i + 0.5)/16.0, 0.5)).rgb; }
+float bayer2(vec2 a){ a = mod(floor(a), 2.0); return fract(a.x*0.5 + a.y*0.75); }
+float bayer4(vec2 a){ return bayer2(0.5*a)*0.25 + bayer2(a); }
+float lagF(float x){
+  if(uK < 0.5) return 1.0;
+  float L0 = 1.0, L1 = 1.0 + uA - x;
+  for(int i = 1; i < 7; i++){
+    float fi = float(i);
+    if(fi >= uK) break;
+    float L2 = ((2.0*fi + 1.0 + uA - x)*L1 - (fi + uA)*L0)/(fi + 1.0);
+    L0 = L1; L1 = L2;
+  }
+  return L1;
+}
+float angF(vec3 p){
+  float x = p.x, y = p.y, z = p.z;
+  if(uOrb == 0) return 1.0;
+  if(uOrb == 1) return x;
+  if(uOrb == 2) return y;
+  if(uOrb == 3) return z;
+  if(uOrb == 4) return 2.0*z*z - x*x - y*y;
+  if(uOrb == 5) return x*z;
+  if(uOrb == 6) return y*z;
+  if(uOrb == 7) return x*y;
+  if(uOrb == 8) return x*x - y*y;
+  if(uOrb == 9) return z*(2.0*z*z - 3.0*x*x - 3.0*y*y);
+  if(uOrb == 10) return x*(4.0*z*z - x*x - y*y);
+  if(uOrb == 11) return y*(4.0*z*z - x*x - y*y);
+  if(uOrb == 12) return x*y*z;
+  if(uOrb == 13) return z*(x*x - y*y);
+  if(uOrb == 14) return x*(x*x - 3.0*y*y);
+  return y*(3.0*x*x - y*y);
+}
+float psi(vec3 p){ float r = length(p); return angF(p)*exp(-r/uNf)*lagF(2.0*r/uNf)*uScale; }
+bool clipped(vec3 p){
+  if(uCut == 1) return p.x > 0.0;
+  if(uCut == 2) return p.x > 0.0 && p.y > 0.0 && p.z > 0.0;
+  return false;
+}
+void main(){
+  vec2 fc = floor(gl_FragCoord.xy);
+  vec2 uv = (gl_FragCoord.xy/uRes)*2.0 - 1.0;
+  float bay = bayer4(fc);
+  vec3 bg = pal(0.0);
+  vec2 g = mod(fc, 12.0);
+  if(g.x == 0.0 && g.y == 0.0) bg = pal(2.0);
+  if(bay >= uFade){ gl_FragColor = vec4(bg, 1.0); return; }
+  vec3 ro = uR*uv.x*uView + uU*uv.y*uView + uB*(uRb*1.5);
+  vec3 rd = -uB;
+  float b = dot(ro, rd), c = dot(ro, ro) - uRb*uRb, h = b*b - c;
+  if(h <= 0.0){ gl_FragColor = vec4(bg, 1.0); return; }
+  h = sqrt(h);
+  float t0 = -b - h, t1 = -b + h, dt = (t1 - t0)/float(STEPS);
+  bool prevClip = true, first = true, hit = false, cutHit = false, sheet = false;
+  float pSR = 0.0, pSA = 0.0, cR = 0.0, cA = 0.0, tHit = 0.0, sheetIdx = 0.0;
+  for(int i = 0; i <= STEPS; i++){
+    float t = t0 + dt*float(i);
+    vec3 p = ro + rd*t;
+    bool cl = clipped(p);
+    float r = length(p);
+    float lg = lagF(2.0*r/uNf);
+    float an = angF(p);
+    float ps = an*exp(-r/uNf)*lg*uScale;
+    float sR = sign(lg), sA = sign(an);
+    if(!cl){
+      if(abs(ps) > uIso){ hit = true; tHit = t; cutHit = prevClip && !first; break; }
+      if(uSheets == 1 && !first && !prevClip && r < uRs){
+        float fall = 1.0 - r*r/(uRs*uRs);
+        float bz = bayer4(fc*0.5 + vec2(cR + cA, 2.0*(cR + cA)));
+        if(sR != pSR){
+          vec2 q = mod(fc + vec2(cR, 0.0), 2.0);
+          if(q.x == 0.0 && q.y == 0.0 && bz < 0.25 + fall){ sheet = true; sheetIdx = 8.0; break; }
+          cR += 1.0;
+        }
+        if(sA != pSA){
+          if(mod(fc.x + fc.y + cA*2.0, 4.0) == 0.0 && bz < fall*fall*0.95){ sheet = true; sheetIdx = 15.0; break; }
+          cA += 1.0;
+        }
+      }
+    }
+    prevClip = cl; first = false; pSR = sR; pSA = sA;
+  }
+  vec3 col = bg;
+  if(sheet){ col = pal(sheetIdx); }
+  else if(hit){
+    float ta = tHit - dt, tb = tHit;
+    if(cutHit){
+      for(int j = 0; j < 10; j++){ float tm = 0.5*(ta + tb); if(clipped(ro + rd*tm)) ta = tm; else tb = tm; }
+      vec3 pc = ro + rd*tb;
+      float pcs = psi(pc);
+      if(abs(pcs) > uIso){
+        float m = clamp((abs(pcs) - uIso)/max(1.0 - uIso, 1e-6), 0.0, 1.0);
+        float k = clamp(floor(pow(m, 0.45)*4.0 + 1.0 + (bay - 0.5)*0.9 + 0.5), 1.0, 5.0);
+        if(mod(fc.x - fc.y, 6.0) == 0.0) k -= 1.0;
+        col = pal((pcs > 0.0 ? 3.0 : 9.0) + k);
+        gl_FragColor = vec4(col, 1.0); return;
+      }
+      ta = tb; tb = tHit;
+    }
+    for(int j = 0; j < 8; j++){ float tm = 0.5*(ta + tb); if(abs(psi(ro + rd*tm)) > uIso) tb = tm; else ta = tm; }
+    vec3 p = ro + rd*tb;
+    float ps = psi(p);
+    float e = uView*0.004;
+    vec3 gr = vec3(abs(psi(p + vec3(e,0.0,0.0))) - abs(psi(p - vec3(e,0.0,0.0))),
+                   abs(psi(p + vec3(0.0,e,0.0))) - abs(psi(p - vec3(0.0,e,0.0))),
+                   abs(psi(p + vec3(0.0,0.0,e))) - abs(psi(p - vec3(0.0,0.0,e))));
+    vec3 N = -gr/max(length(gr), 1e-12);
+    vec3 Ld = normalize(-0.45*uR + 0.75*uU + 0.55*uB);
+    float s = 0.22 + 0.78*max(dot(N, Ld), 0.0);
+    float k = clamp(floor(s*5.0 + (bay - 0.5)*0.95), 0.0, 5.0);
+    if(dot(N, uB) < 0.2) k = 0.0;
+    if(uHatch == 1 && ps < 0.0 && mod(fc.x + fc.y, 3.0) == 0.0) k = max(k - 2.0, 0.0);
+    col = pal((ps > 0.0 ? 3.0 : 9.0) + k);
+    float sp = pow(max(dot(N, normalize(Ld + uB)), 0.0), 60.0);
+    if(sp > 0.55 && k >= 4.0) col = pal(15.0);
+  }
+  gl_FragColor = vec4(col, 1.0);
+}`;
+
+const VOL = new Map();
+const ISO_FRACS = [0.5,0.55,0.6,0.65,0.7,0.75,0.8,0.85,0.9,0.95];
+function orbitalVolume(n, l, id){
+  const key = n + "," + l + "," + id;
+  if(VOL.has(key)) return VOL.get(key);
+  const R = radialInfo(n, l).r995, G = 40, h = 2*R/G, N3 = G*G*G;
+  const v = new Float64Array(N3), rr = new Float32Array(N3);
+  let q = 0, vmax = 0;
+  for(let i = 0; i < G; i++){ const x = -R + (i + 0.5)*h;
+    for(let j = 0; j < G; j++){ const y = -R + (j + 0.5)*h;
+      for(let k = 0; k < G; k++){ const z = -R + (k + 0.5)*h;
+        const p = Math.abs(psiRaw(n, l, id, x, y, z)); v[q] = p; rr[q] = Math.sqrt(x*x + y*y + z*z); if(p > vmax) vmax = p; q++; } } }
+  const sq = new Float64Array(N3); let total = 0;
+  for(let i = 0; i < N3; i++){ sq[i] = v[i]*v[i]; total += sq[i]; }
+  const sorted = sq.slice().sort();
+  const isos = []; let cum = 0, fi = 0;
+  for(let s = N3 - 1; s >= 0 && fi < ISO_FRACS.length; s--){
+    cum += sorted[s];
+    while(fi < ISO_FRACS.length && cum >= ISO_FRACS[fi]*total){ isos.push(Math.sqrt(sorted[s])/vmax); fi++; }
+  }
+  while(isos.length < ISO_FRACS.length) isos.push(isos[isos.length-1] || 0.01);
+  const th = isos[isos.length-1]*vmax; let rExt = 0;
+  for(let i = 0; i < N3; i++) if(v[i] >= th && rr[i] > rExt) rExt = rr[i];
+  const out = {R, psiMax: vmax, isos, rExt: Math.min(rExt + h, R)};
+  VOL.set(key, out);
+  return out;
+}
+function isoFor(vol, frac){
+  let best = 0, bd = 9;
+  ISO_FRACS.forEach((f, i) => { const d = Math.abs(f - frac); if(d < bd){ bd = d; best = i; } });
+  return vol.isos[best];
+}
+function camBasis(yaw, pitch){
+  const cp = Math.cos(pitch), sp = Math.sin(pitch), cy = Math.cos(yaw), sy = Math.sin(yaw);
+  return {B:[cp*cy, cp*sy, sp], R:[-sy, cy, 0], U:[-sp*cy, -sp*sy, cp]};
+}
+
+class OrbitalGL {
+  constructor(canvas, preserve){
+    this.cv = canvas;
+    const attrs = {antialias:false, alpha:false, depth:false, preserveDrawingBuffer:!!preserve};
+    const gl = canvas.getContext("webgl", attrs) || canvas.getContext("experimental-webgl", attrs);
+    if(!gl) throw new Error("WebGL unavailable");
+    this.gl = gl;
+    const sh = (type, src) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s);
+      if(!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s)); return s; };
+    const pr = gl.createProgram();
+    gl.attachShader(pr, sh(gl.VERTEX_SHADER, VS)); gl.attachShader(pr, sh(gl.FRAGMENT_SHADER, FS)); gl.linkProgram(pr);
+    if(!gl.getProgramParameter(pr, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(pr));
+    gl.useProgram(pr); this.pr = pr;
+    const buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 3,-1, -1,3]), gl.STATIC_DRAW);
+    const loc = gl.getAttribLocation(pr, "a"); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+    const tex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, tex);
+    const px = new Uint8Array(16*4); PAL_RGB.forEach((c, i) => { px[i*4] = c[0]; px[i*4+1] = c[1]; px[i*4+2] = c[2]; px[i*4+3] = 255; });
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 16, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, px);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    this.u = {};
+    ["uRes","uView","uRb","uRs","uNf","uK","uA","uIso","uScale","uFade","uOrb","uCut","uSheets","uHatch","uR","uU","uB","uPal"].forEach(k => this.u[k] = gl.getUniformLocation(pr, k));
+    gl.uniform1i(this.u.uPal, 0);
+    this.s = {n:3, l:1, id:3, frac:0.85, cut:0, sheets:1, hatch:0, yaw:0.62, pitch:0.36, fade:1, zoom:1};
+  }
+  set(o){ Object.assign(this.s, o); }
+  render(){
+    const gl = this.gl, s = this.s, u = this.u, cv = this.cv;
+    const vol = orbitalVolume(s.n, s.l, s.id);
+    const ext = vol.rExt;
+    gl.viewport(0, 0, cv.width, cv.height);
+    gl.uniform2f(u.uRes, cv.width, cv.height);
+    gl.uniform1f(u.uView, ext*1.06/s.zoom); gl.uniform1f(u.uRb, ext*1.02); gl.uniform1f(u.uRs, ext*0.9);
+    gl.uniform1f(u.uNf, s.n); gl.uniform1f(u.uK, s.n - s.l - 1); gl.uniform1f(u.uA, 2*s.l + 1);
+    gl.uniform1f(u.uIso, isoFor(vol, s.frac)); gl.uniform1f(u.uScale, 1/vol.psiMax); gl.uniform1f(u.uFade, s.fade);
+    gl.uniform1i(u.uOrb, s.id); gl.uniform1i(u.uCut, s.cut); gl.uniform1i(u.uSheets, s.sheets); gl.uniform1i(u.uHatch, s.hatch);
+    const c = camBasis(s.yaw, s.pitch);
+    gl.uniform3fv(u.uR, c.R); gl.uniform3fv(u.uU, c.U); gl.uniform3fv(u.uB, c.B);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+}
+function drawGizmo(cv, yaw, pitch){
+  const ctx = cv.getContext("2d"), W = cv.width, c = camBasis(yaw, pitch), m = W/2;
+  ctx.clearRect(0, 0, W, W);
+  const axes = [["x",[1,0,0]],["y",[0,1,0]],["z",[0,0,1]]].map(([nm, e]) => ({nm,
+    sx: e[0]*c.R[0] + e[1]*c.R[1] + e[2]*c.R[2], sy: e[0]*c.U[0] + e[1]*c.U[1] + e[2]*c.U[2], d: e[0]*c.B[0] + e[1]*c.B[1] + e[2]*c.B[2]}));
+  axes.sort((a, b) => a.d - b.d);
+  for(const a of axes){
+    const len = W*0.34, col = a.d >= 0 ? PAL[7] : PAL[5];
+    const x1 = Math.round(m + a.sx*len), y1 = Math.round(m - a.sy*len);
+    ctx.fillStyle = col;
+    const steps = Math.max(Math.abs(x1 - m), Math.abs(y1 - m), 1);
+    for(let i = 0; i <= steps; i++) ctx.fillRect(Math.round(m + (x1 - m)*i/steps), Math.round(m + (y1 - m)*i/steps), 1, 1);
+    const lx = Math.round(m + a.sx*(len + 4)) - 1, ly = Math.round(m - a.sy*(len + 4)) - 2;
+    microText(ctx, a.nm, Math.min(Math.max(lx, 0), W - 3), Math.min(Math.max(ly, 0), W - 5), a.d >= 0 ? PAL[8] : PAL[6]);
+  }
+  ctx.fillStyle = PAL[15]; ctx.fillRect(m - 1, m - 1, 2, 2);
+}
+// integer-scaled pixel canvases: each art pixel covers a whole number of device pixels
+function pixelFit(cv, opts = {}){
+  const par = cv.parentElement, cs = getComputedStyle(par);
+  const avail = par.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+  if(avail <= 0) return false;
+  const dpr = window.devicePixelRatio || 1, dev = Math.floor(avail*dpr);
+  if(opts.target){
+    const k = Math.max(1, Math.round(dev/opts.target)), res = Math.floor(dev/k);
+    const aspect = opts.aspect || 1;
+    if(cv.width !== res){ cv.width = res; cv.height = Math.round(res/aspect); }
+    cv.style.width = (res*k/dpr) + "px"; cv.style.height = (cv.height*k/dpr) + "px";
+  } else {
+    const kf = dev/cv.width, k = kf >= 3 ? Math.floor(kf) : kf;
+    cv.style.width = (cv.width*k/dpr) + "px"; cv.style.height = (cv.height*k/dpr) + "px";
+  }
+  cv.style.marginInline = "auto";
+  return true;
+}
+</script>
+<script>
+const $ = s => document.querySelector(s);
+
+/* ================= logo: extruded pixel letters; the O's are 2s cross-sections ================= */
+function buildLogo(){
+  const L = {
+    N:["##....##","###...##","####..##","##.##.##","##..####","##...###","##....##","##....##"],
+    O:[".######.","##....##","##....##","##.##.##","##.##.##","##....##","##....##",".######."],
+    D:["######..","##...##.","##....##","##....##","##....##","##....##","##...##.","######.."],
+    E:["########","##......","##......","#######.","##......","##......","##......","########"],
+    S:[".######.","##....##","##......",".######.","......##","......##","##....##",".######."]};
+  const word = "NODES", band = ["#ffe9c4","#ffe9c4","#ffd27f","#ffd27f","#ffb04a","#ffb04a","#ff7a1a","#ff7a1a"];
+  const face = [], nuc = [];
+  [...word].forEach((ch, li) => L[ch].forEach((row, y) => [...row].forEach((c, x) => {
+    if(c !== "#") return;
+    const X = li*10 + x;
+    if(ch === "O" && y >= 3 && y <= 4 && x >= 3 && x <= 4) nuc.push([X, y]); else face.push([X, y]);
+  })));
+  const path = (pts, dx=0, dy=0) => pts.map(([x, y]) => `M${x+dx} ${y+dy}h1v1h-1z`).join("");
+  let rows = "";
+  for(let y = 0; y < 8; y++) rows += `<path fill="${band[y]}" d="${path(face.filter(p => p[1] === y))}"/>`;
+  const all = face.concat(nuc);
+  const svg = `<svg viewBox="-0.5 -0.5 49.5 11" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges" role="img" aria-label="NODES">
+    <defs><clipPath id="lgc"><path d="${path(all)}"/></clipPath></defs>
+    <path fill="#3a1a0b" d="${path(all, 2, 2)}"/>
+    <path fill="#6e2a0c" d="${path(all, 1.5, 1.5)}"/>
+    <path fill="#b4460f" d="${path(all, 0.75, 0.75)}"/>
+    ${rows}
+    <path class="nuc" fill="#fff8ec" d="${path(nuc)}"/>
+    <g clip-path="url(#lgc)"><rect class="shine" x="-6" y="-1" width="2.2" height="11" fill="#fff8ec" opacity=".85"/></g>
+  </svg>`;
+  $("#logo").innerHTML = svg;
+  const st = document.createElement("style");
+  st.textContent = `.logo .shine{animation:shine 4.2s steps(34) infinite;transform:skewX(-22deg)}
+  @keyframes shine{0%{transform:translateX(0) skewX(-22deg)}55%,100%{transform:translateX(62px) skewX(-22deg)}}
+  .logo .nuc{animation:nuc 1.4s steps(1) infinite}@keyframes nuc{50%{fill:#ff7a1a}}`;
+  document.head.appendChild(st);
+}
+
+/* ================= hero: arcade attract mode ================= */
+const ATTRACT = [
+  {n:3, l:2, id:4, cut:0}, {n:2, l:0, id:0, cut:2}, {n:2, l:1, id:3, cut:0}, {n:4, l:3, id:9, cut:0},
+  {n:3, l:1, id:3, cut:1}, {n:4, l:3, id:12, cut:0}, {n:3, l:0, id:0, cut:2}, {n:4, l:2, id:8, cut:0},
+  {n:4, l:3, id:14, cut:0}, {n:5, l:2, id:4, cut:1}, {n:4, l:3, id:10, cut:0}];
+function initAttract(){
+  const cv = $("#attract"); let gl;
+  try{ gl = new OrbitalGL(cv, false); }catch(e){ cv.replaceWith(Object.assign(document.createElement("p"), {className:"nogl", textContent:"Your browser could not start WebGL. The rest of the page still works."})); return; }
+  let idx = 0, t0 = performance.now(), last = t0, visible = true;
+  const fit = () => pixelFit(cv, {target:150});
+  fit(); addEventListener("resize", fit);
+  function show(i){
+    const a = ATTRACT[i];
+    gl.set({n:a.n, l:a.l, id:a.id, cut:a.cut, sheets:1, frac:0.85, fade: REDUCED ? 1 : 0});
+    $("#att-name").innerHTML = orbHTML(a.n, a.id);
+    $("#att-count").textContent = `RAD ${a.n - a.l - 1} · ANG ${a.l}`;
+    t0 = performance.now();
+  }
+  show(0);
+  onVisible(cv, v => visible = v);
+  const hold = REDUCED ? 6500 : 4600;
+  (function loop(now){
+    requestAnimationFrame(loop);
+    if(!visible || document.hidden) { last = now; return; }
+    const dt = Math.min(now - last, 60); last = now;
+    if(!REDUCED) gl.s.yaw += dt*0.0007;
+    const age = now - t0;
+    gl.s.fade = REDUCED ? 1 : Math.min(1, Math.floor(age/420*16)/16 + 1/32);
+    if(age > hold){ idx = (idx + 1) % ATTRACT.length; show(idx); }
+    gl.render();
+  })(performance.now());
+}
+
+/* ================= mundo 1: string ================= */
+function initString(){
+  const cv = $("#string"), ctx = cv.getContext("2d"), W = cv.width, H = cv.height;
+  let k = 2, visible = true;
+  const keys = makeKeys($("#str-k"), [0,1,2,3].map(v => ({html:String(v), value:v})), v => { k = v; pressOnly(keys, v); });
+  pressOnly(keys, k);
+  const fit = () => pixelFit(cv); fit(); addEventListener("resize", fit);
+  onVisible(cv, v => visible = v);
+  function draw(t){
+    ctx.fillStyle = PAL[0]; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = PAL[1]; for(let x = 4; x < W; x += 8) for(let y = 4; y < H; y += 8) ctx.fillRect(x, y, 1, 1);
+    const m = k + 1, x0 = 10, x1 = W - 11, mid = (H/2)|0, A = H*0.3;
+    const ct = REDUCED ? 1 : Math.cos(t*0.001*Math.PI*(0.55 + 0.35*m));
+    ctx.fillStyle = PAL[2];
+    for(let x = x0; x <= x1; x += 2){ const e = Math.sin(m*Math.PI*(x - x0)/(x1 - x0))*A; ctx.fillRect(x, Math.round(mid - e), 1, 1); ctx.fillRect(x, Math.round(mid + e), 1, 1); }
+    for(let x = x0; x <= x1; x += 3) ctx.fillRect(x, mid, 1, 1);
+    let py = null;
+    for(let x = x0; x <= x1; x++){
+      const s = Math.sin(m*Math.PI*(x - x0)/(x1 - x0)), y = Math.round(mid - s*A*ct);
+      if(py === null) py = y;
+      ctx.fillStyle = s >= 0 ? PAL[6] : PAL[12];
+      const a = Math.min(py, y), b = Math.max(py, y); ctx.fillRect(x, a, 1, b - a + 2); py = y;
+    }
+    ctx.fillStyle = PAL[5]; ctx.fillRect(x0 - 6, mid - 9, 5, 19); ctx.fillRect(x1 + 2, mid - 9, 5, 19);
+    ctx.fillStyle = PAL[4]; ctx.fillRect(x0 - 6, mid + 8, 5, 2); ctx.fillRect(x1 + 2, mid + 8, 5, 2);
+    for(let j = 1; j < m; j++){
+      const x = Math.round(x0 + (x1 - x0)*j/m);
+      ctx.fillStyle = PAL[15];
+      ctx.fillRect(x - 1, mid - 1, 3, 3); ctx.fillRect(x, mid - 3, 1, 7); ctx.fillRect(x - 3, mid, 7, 1);
+      ctx.fillStyle = PAL[8]; for(let y = mid + 6; y < H - 6; y += 2) ctx.fillRect(x, y, 1, 1);
+      microText(ctx, String(j), x - 1, H - 6, PAL[7]);
+    }
+  }
+  (function loop(t){ requestAnimationFrame(loop); if(visible && !document.hidden) draw(t); })(0);
+}
+
+/* ================= mundo 1: drum (circular membrane) ================= */
+const JZ = [[2.404826,5.520078,8.653728],[3.831706,7.015587,10.173468],[5.135622,8.417244,11.619841],[6.380162,9.761023,13.015201]];
+function besselJ(m, x){ let s = 0; const N = 64; for(let i = 0; i < N; i++){ const t = (i + 0.5)*Math.PI/N; s += Math.cos(m*t - x*Math.sin(t)); } return s/N; }
+function initDrum(){
+  const cv = $("#drum"), ctx = cv.getContext("2d"), W = cv.width, img = ctx.createImageData(W, W);
+  let mc = 1, md = 2, shape = null, sJ = null, sA = null, visible = true;
+  const kc = makeKeys($("#drum-c"), [0,1,2].map(v => ({html:String(v), value:v})), v => { mc = v; pressOnly(kc, v); build(); });
+  const km = makeKeys($("#drum-m"), [0,1,2,3].map(v => ({html:String(v), value:v})), v => { md = v; pressOnly(km, v); build(); });
+  pressOnly(kc, mc); pressOnly(km, md);
+  const fit = () => pixelFit(cv); fit(); addEventListener("resize", fit);
+  onVisible(cv, v => visible = v);
+  const c0 = (W - 1)/2, RAD = W/2 - 3;
+  function build(){
+    const j = JZ[md][mc]; shape = new Float32Array(W*W); sJ = new Int8Array(W*W); sA = new Int8Array(W*W);
+    let mx = 0;
+    for(let y = 0; y < W; y++) for(let x = 0; x < W; x++){
+      const dx = x - c0, dy = c0 - y, r = Math.hypot(dx, dy)/RAD, i = y*W + x;
+      if(r > 1){ shape[i] = NaN; continue; }
+      const J = besselJ(md, j*r), A = md ? Math.cos(md*Math.atan2(dy, dx) + 1e-3) : 1;
+      shape[i] = J*A; sJ[i] = Math.sign(J); sA[i] = Math.sign(A); mx = Math.max(mx, Math.abs(J*A));
+    }
+    for(let i = 0; i < shape.length; i++) if(!isNaN(shape[i])) shape[i] /= mx;
+  }
+  build();
+  function draw(t){
+    const amp = REDUCED ? 1 : Math.cos(t*0.001*Math.PI*1.1), d = img.data;
+    const ph = Math.floor(t/140);
+    for(let y = 0; y < W; y++) for(let x = 0; x < W; x++){
+      const i = y*W + x, v = shape[i]; let ci;
+      if(isNaN(v)){
+        const r = Math.hypot(x - c0, c0 - y)/RAD;
+        ci = r < 1.06 ? 5 : ((x % 8 === 4 && y % 8 === 4) ? 1 : 0);
+      } else {
+        const a = Math.sqrt(Math.abs(v*amp)), lv = Math.floor(a*5 + (bayer(x, y) - 0.5)*0.9);
+        ci = lv <= 0 ? 0 : ((v*amp > 0 ? RAMP_POS : RAMP_NEG)[Math.min(lv, 5) - 1]);
+        const rn = (x < W - 1 && sJ[i] !== sJ[i + 1] && !isNaN(shape[i + 1])) || (y < W - 1 && sJ[i] !== sJ[i + W] && !isNaN(shape[i + W]));
+        const an = (x < W - 1 && sA[i] !== sA[i + 1] && !isNaN(shape[i + 1])) || (y < W - 1 && sA[i] !== sA[i + W] && !isNaN(shape[i + W]));
+        if(an) ci = NODE_A; else if(rn && ((x + y + ph) & 3) < 2) ci = NODE_R;
+      }
+      const c = PAL_RGB[ci]; d[i*4] = c[0]; d[i*4 + 1] = c[1]; d[i*4 + 2] = c[2]; d[i*4 + 3] = 255;
+    }
+    ctx.putImageData(img, 0, 0);
+  }
+  (function loop(t){ requestAnimationFrame(loop); if(visible && !document.hidden) draw(t); })(0);
+}
+
+/* ================= mundo 2: calculator ================= */
+function initCalc(){
+  let n = 5, l = 2;
+  const kn = makeKeys($("#calc-n"), [1,2,3,4,5,6,7].map(v => ({html:String(v), value:v})), v => { n = v; pressOnly(kn, v - 1); upd(); });
+  const kl = makeKeys($("#calc-l"), LETTER.map((s, i) => ({html:s, value:i})), v => { l = v; pressOnly(kl, v); upd(); });
+  pressOnly(kn, n - 1); pressOnly(kl, l);
+  function upd(){
+    const out = $("#calc-out");
+    if(l > n - 1){
+      const list = LETTER.slice(0, n).map((s, i) => `${i} (${s})`), opts = list.length > 1 ? list.slice(0, -1).join(", ") + " or " + list[list.length - 1] : list[0];
+      out.innerHTML = `<div class="calc-err">IMPOSSIBLE ORBITAL!</div><p>With n = ${n}, ℓ can only be ${opts}. There is no ${n}${LETTER[l]} orbital.</p>`;
+      sfx("bad");
+    } else {
+      const r = n - l - 1;
+      const ico = (k, name) => k ? Array.from({length:k}, () => icon(name)).join("") : `<span class="faint">none</span>`;
+      out.innerHTML = `<div class="calc-name">${n}${LETTER[l]}</div>
+        <div class="calc-rows">
+          <div class="calc-row"><span class="label">radial</span><span class="icons rad">${ico(r, "ring")}</span><span class="num">${r}</span></div>
+          <div class="calc-row"><span class="label">angular</span><span class="icons ang">${ico(l, "plane")}</span><span class="num">${l}</span></div>
+        </div>
+        <p class="calc-sum">${r} radial + ${l} angular = <span class="hl">${n - 1} node${n - 1 === 1 ? "" : "s"}</span> (n − 1 = ${n - 1})</p>`;
+    }
+    glyphify(out);
+  }
+  upd();
+}
+</script>
+<script>
+/* ================= 2D field sampling (shared by slice, onion, quiz) ================= */
+const BEST_PLANE = {0:"xz",1:"xz",2:"yz",3:"xz",4:"xz",5:"xz",6:"yz",7:"xy",8:"xy",9:"xz",10:"xz",11:"yz",12:"diag",13:"xz",14:"xy",15:"xy"};
+const PLANE_AX = {xz:["x","z"], yz:["y","z"], xy:["x","y"], diag:["x=y","z"]};
+function sampleField(S, n, l, id, plane, E, sqrtR){
+  const vals = new Float32Array(S*S), sR = new Int8Array(S*S), sA = new Int8Array(S*S);
+  const k = n - l - 1, a = 2*l + 1; let mx = 0, anyA = false;
+  for(let j = 0; j < S; j++) for(let i = 0; i < S; i++){
+    let u = (i + 0.5)/S*2 - 1, v = 1 - (j + 0.5)/S*2;
+    if(sqrtR){ const rho = Math.hypot(u, v); u *= rho; v *= rho; }
+    u *= E; v *= E;
+    let x, y, z;
+    if(plane === "xz"){ x = u; y = 0; z = v; } else if(plane === "yz"){ x = 0; y = u; z = v; }
+    else if(plane === "xy"){ x = u; y = v; z = 0; } else { x = u*Math.SQRT1_2; y = x; z = v; }
+    const r = Math.sqrt(x*x + y*y + z*z), Lg = lag(k, a, 2*r/n), A = angP(id, x, y, z), val = A*Math.exp(-r/n)*Lg;
+    const q = j*S + i; vals[q] = val; sR[q] = Math.sign(Lg); sA[q] = Math.sign(A);
+    if(A !== 0) anyA = true;
+    const av = Math.abs(val); if(av > mx) mx = av;
+  }
+  return {S, vals, sR, sA, mx, nodal: !anyA};
+}
+function paintField(ctx, F, o = {}){
+  const S = F.S, img = ctx.createImageData(S, S), d = img.data, ph = o.phase || 0, gam = o.gamma || 0.42;
+  for(let j = 0; j < S; j++) for(let i = 0; i < S; i++){
+    const q = j*S + i, val = F.vals[q];
+    let ci = ((i & 7) === 4 && (j & 7) === 4) ? 1 : 0;
+    if(!F.nodal && F.mx > 0){
+      const lv = Math.floor(Math.pow(Math.abs(val)/F.mx, gam)*6 + (bayer(i, j) - 0.5)*0.9);
+      if(lv > 0) ci = (val > 0 ? RAMP_POS : RAMP_NEG)[Math.min(lv, 6) - 1];
+      else if(o.axes && (i === S >> 1 || j === S >> 1) && ((i + j) & 1)) ci = 2;
+      if(o.mark){
+        const rn = (i < S - 1 && F.sR[q] !== F.sR[q + 1]) || (j < S - 1 && F.sR[q] !== F.sR[q + S]);
+        const an = F.sA[q] === 0 || (i < S - 1 && F.sA[q] !== F.sA[q + 1]) || (j < S - 1 && F.sA[q] !== F.sA[q + S]);
+        if(an && !o.radialOnly) ci = NODE_A;
+        else if(rn && ((i + j + ph) & 3) < 2) ci = NODE_R;
+      }
+    }
+    const c = PAL_RGB[ci]; d[q*4] = c[0]; d[q*4 + 1] = c[1]; d[q*4 + 2] = c[2]; d[q*4 + 3] = 255;
+  }
+  ctx.putImageData(img, 0, 0);
+}
+
+/* ================= mundo 3: nodoscopio ================= */
+const EX = {n:4, l:1, id:3, plane:"xz", zoom:1, mark:true, chart:"P", scale:"lin", cut:1, sheets:1, spin:!REDUCED, hatch:0, frac:0.85};
+let VIEW = null, viewDirty = true, field = null, loadOrbital = () => {};
+function initScope(){
+  const cv = $("#view3d"), gz = $("#gizmo");
+  try{ VIEW = new OrbitalGL(cv, false); }
+  catch(e){ $("#view-wrap").innerHTML = `<p class="nogl">Your browser could not start WebGL, so the 3D view is not available. The 2D slice and the radial function below still work.</p>`; }
+  const kn = makeKeys($("#ex-n"), [1,2,3,4,5,6,7].map(v => ({html:String(v), value:v})), v => {
+    EX.n = v; if(EX.l > v - 1){ EX.l = v - 1; EX.id = DEFAULT_ORB[EX.l]; EX.plane = BEST_PLANE[EX.id]; } update(); });
+  const kl = makeKeys($("#ex-l"), LETTER.map((s, i) => ({html:s, value:i, title:"ℓ = " + i})), v => {
+    EX.l = v; EX.id = DEFAULT_ORB[v]; EX.plane = BEST_PLANE[EX.id]; update(); });
+  let km = [];
+  function buildM(){
+    km = makeKeys($("#ex-m"), ORBS_BY_L[EX.l].map(o => ({html:o.h, value:o.id})), v => { EX.id = v; EX.plane = BEST_PLANE[v]; update(); });
+  }
+  const planes = ["xz","yz","xy","diag"];
+  const kp = makeKeys($("#sl-plane"), planes.map(p => ({html: p === "diag" ? "x=y" : p, value:p, title: p === "diag" ? "Vertical plane at 45° between x and y" : p + " plane"})), v => { EX.plane = v; updateSlice(); });
+  let lastL = -1;
+  function update(){
+    pressOnly(kn, EX.n - 1);
+    kl.forEach((b, i) => { b.disabled = i > EX.n - 1; b.setAttribute("aria-pressed", String(i === EX.l)); });
+    if(lastL !== EX.l){ buildM(); lastL = EX.l; }
+    km.forEach(b => b.setAttribute("aria-pressed", "false"));
+    const mi = ORBS_BY_L[EX.l].findIndex(o => o.id === EX.id); if(km[mi]) km[mi].setAttribute("aria-pressed", "true");
+    if(VIEW){ VIEW.set({n:EX.n, l:EX.l, id:EX.id, cut:EX.cut, sheets:EX.sheets, hatch:EX.hatch, frac:EX.frac, fade: REDUCED ? 1 : 0}); spawnT = performance.now(); viewDirty = true; }
+    updateHud(); updateSlice(); updateChart();
+  }
+  function updateHud(){
+    const {n, l, id} = EX, info = radialInfo(n, l), r = n - l - 1, o = ORBS[id];
+    const am = Math.abs(parseInt(o.m.replace("−", "-"), 10)) || 0;
+    $("#hud-name").innerHTML = orbHTML(n, id);
+    $("#hud-qn").innerHTML = `<span>n <b>${n}</b></span><span>ℓ <b>${l}</b></span><span>|m| <b>${am}</b></span>`;
+    $("#hud-r").textContent = r; $("#hud-a").textContent = l; $("#hud-t").textContent = n - 1;
+    $("#hud-rbar").innerHTML = r ? Array.from({length:r}, () => icon("ring")).join("") : "";
+    $("#hud-abar").innerHTML = l ? o.nodes.map(nd => icon(nd[0])).join("") : "";
+    let li = info.nodes.map(rk => `<li class="r">${icon("ring")}<span>sphere <em>r = ${fmt(rk, 2)} a<sub>0</sub></em></span></li>`).join("");
+    li += o.nodes.map(nd => `<li class="a">${icon(nd[0])}<span>${nd[1]} <em>${nd[2]}</em></span></li>`).join("");
+    if(!li) li = `<li><span></span><span class="muted">No nodes: 1s is a single sphere with no sign changes.</span></li>`;
+    $("#hud-surf").innerHTML = li;
+    glyphify($(".scope-hud"));
+  }
+  // --- slice ---
+  const sc = $("#slice"), sctx = sc.getContext("2d");
+  function updateSlice(){
+    pressOnly(kp, planes.indexOf(EX.plane));
+    const E = radialInfo(EX.n, EX.l).r995/EX.zoom;
+    field = sampleField(sc.width, EX.n, EX.l, EX.id, EX.plane, E, false);
+    $("#ax-h").textContent = PLANE_AX[EX.plane][0]; $("#ax-v").textContent = PLANE_AX[EX.plane][1];
+    $("#sl-zoom-o").innerHTML = `${EX.zoom}×`;
+    const msg = $("#slice-msg");
+    if(field.nodal){
+      msg.innerHTML = `<div><b>This slice is a node!</b>ψ = 0 across the whole ${EX.plane === "diag" ? "diagonal x = y" : PLANE_AX[EX.plane].join("")} plane. Pick another plane to see the lobes.</div>`;
+      msg.hidden = false; glyphify(msg);
+    } else msg.hidden = true;
+    $(".slice-wrap").setAttribute("aria-label", `Slice of the ${orbText(EX.n, EX.id)} orbital in the ${EX.plane} plane, ±${fmt(E, 1)} a0 wide`);
+    paintSlice();
+  }
+  let antPhase = 0;
+  function paintSlice(){ if(field) paintField(sctx, field, {mark:EX.mark, axes:true, phase:antPhase}); }
+  // --- radial chart ---
+  const rc = $("#radial"), rctx = rc.getContext("2d");
+  let hoverX = -1;
+  function chartGeom(){
+    const W = rc.width, H = rc.height, pl = 6, pr = 6, pt = 12, pb = 12, rmax = radialInfo(EX.n, EX.l).r995;
+    const pw = W - pl - pr, phh = H - pt - pb;
+    const xOf = r => pl + (EX.scale === "sqrt" ? Math.sqrt(Math.max(r, 0)/rmax) : r/rmax)*pw;
+    const rOf = x => { const f = Math.min(Math.max((x - pl)/pw, 0), 1); return (EX.scale === "sqrt" ? f*f : f)*rmax; };
+    return {W, H, pl, pr, pt, pb, pw, phh, rmax, xOf, rOf};
+  }
+  function updateChart(){
+    const g = chartGeom(), {W, H, pl, pt, pw, phh, rmax, xOf, rOf} = g, n = EX.n, l = EX.l, info = radialInfo(n, l);
+    rctx.fillStyle = PAL[0]; rctx.fillRect(0, 0, W, H);
+    rctx.fillStyle = PAL[1]; for(let x = 4; x < W; x += 8) for(let y = 4; y < H; y += 8) rctx.fillRect(x, y, 1, 1);
+    const ys = []; let mx = 0;
+    for(let c = 0; c <= pw; c++){ const r = rOf(pl + c), R = radialR(n, l, r), v = EX.chart === "P" ? r*r*R*R : R; ys.push(v); mx = Math.max(mx, Math.abs(v)); }
+    const base = EX.chart === "P" ? pt + phh : pt + phh/2, amp = EX.chart === "P" ? phh : phh/2 - 1;
+    rctx.fillStyle = PAL[3]; for(let x = pl; x <= pl + pw; x += 2) rctx.fillRect(x, Math.round(base), 1, 1);
+    let py = null;
+    for(let c = 0; c <= pw; c++){
+      const v = ys[c]/mx, y = Math.round(base - v*amp), x = pl + c, pos = v >= 0;
+      const top = Math.min(y, base), bot = Math.max(y, base);
+      for(let yy = top; yy <= bot; yy++) if(bayer(x, yy) < 0.34){ rctx.fillStyle = pos ? PAL[4] : PAL[10]; rctx.fillRect(x, yy, 1, 1); }
+      if(py === null) py = y;
+      rctx.fillStyle = pos ? PAL[6] : PAL[12];
+      rctx.fillRect(x, Math.min(py, y), 1, Math.abs(py - y) + 2); py = y;
+    }
+    let lastLx = -99, row = 0;
+    info.nodes.forEach(rk => {
+      const x = Math.round(xOf(rk));
+      rctx.fillStyle = PAL[NODE_R];
+      for(let y = pt - 2; y <= pt + phh; y += 2) rctx.fillRect(x, y, 1, 1);
+      const lbl = rk.toFixed(1), w = lbl.length*4 - 1;
+      row = (x - lastLx < w + 3) ? 1 - row : 0; lastLx = x;
+      microText(rctx, lbl, Math.min(Math.max(x - (w >> 1), 1), W - w - 1), row ? 7 : 1, PAL[8]);
+    });
+    rctx.fillStyle = PAL[5]; rctx.fillRect(pl, pt + phh + 1, pw + 1, 1);
+    const target = EX.scale === "sqrt" ? 4 : 5, raw = rmax/target, p10 = Math.pow(10, Math.floor(Math.log10(raw)));
+    const step = [1,2,5,10].map(m => m*p10).find(s => s >= raw) || 10*p10;
+    const ticks = EX.scale === "sqrt" ? [1,2,5,10,20,50,100,200].filter(t => t < rmax*0.97).map(t => t*(rmax > 60 && t < 5 ? 0 : 1)).filter(t => t > 0) : [];
+    if(EX.scale !== "sqrt") for(let t = step; t < rmax*0.98; t += step) ticks.push(t);
+    let prevEnd = -99;
+    [0].concat(ticks).forEach(t => {
+      const x = Math.round(xOf(t)), lbl = String(Math.round(t)), w = lbl.length*4 - 1, lx = Math.min(Math.max(x - (w >> 1), 0), W - w);
+      rctx.fillStyle = PAL[5]; rctx.fillRect(x, pt + phh + 2, 1, 2);
+      if(lx > prevEnd + 2){ microText(rctx, lbl, lx, H - 6, PAL[5]); prevEnd = lx + w; }
+    });
+    if(hoverX >= 0){ rctx.fillStyle = PAL[7]; for(let y = pt; y <= pt + phh; y += 3) rctx.fillRect(hoverX, y, 1, 2); }
+    $("#rad-nodes").innerHTML = info.nodes.length ? info.nodes.map((rk, i) => `<span>node ${i + 1}: r = ${fmt(rk, 2)} a<sub>0</sub></span>`).join("")
+      : `<span class="faint" style="background:none;padding:0">${n}${LETTER[l]} has no radial nodes: R(r) never crosses zero.</span>`;
+    pressOnly([$("#rc-p"), $("#rc-r")], EX.chart === "P" ? 0 : 1);
+    pressOnly([$("#rc-lin"), $("#rc-sqrt")], EX.scale === "lin" ? 0 : 1);
+  }
+  rc.addEventListener("pointermove", e => {
+    const b = rc.getBoundingClientRect(), g = chartGeom(), x = Math.round((e.clientX - b.left)/b.width*g.W);
+    if(x < g.pl || x > g.pl + g.pw){ hoverX = -1; updateChart(); return; }
+    hoverX = x; const r = g.rOf(x), R = radialR(EX.n, EX.l, r);
+    $("#rad-read").innerHTML = `r = ${fmt(r, 2)} a<sub>0</sub> · R = ${fmt(R, 4)} · r²R² = ${fmt(r*r*R*R, 4)}`;
+    updateChart();
+  });
+  rc.addEventListener("pointerleave", () => { hoverX = -1; updateChart(); });
+  $("#rc-p").onclick = () => { EX.chart = "P"; sfx("blip"); updateChart(); };
+  $("#rc-r").onclick = () => { EX.chart = "R"; sfx("blip"); updateChart(); };
+  $("#rc-lin").onclick = () => { EX.scale = "lin"; sfx("blip"); updateChart(); };
+  $("#rc-sqrt").onclick = () => { EX.scale = "sqrt"; sfx("blip"); updateChart(); };
+  $("#sl-zoom").oninput = e => { EX.zoom = +e.target.value; updateSlice(); };
+  $("#sl-mark").onclick = e => { EX.mark = !EX.mark; e.currentTarget.setAttribute("aria-pressed", String(EX.mark)); sfx("blip"); paintSlice(); };
+  // --- 3D view controls ---
+  const cutB = [$("#v-cut0"), $("#v-cut1"), $("#v-cut2")];
+  cutB.forEach((b, i) => b.onclick = () => { EX.cut = i; pressOnly(cutB, i); sfx("blip"); if(VIEW){ VIEW.s.cut = i; viewDirty = true; } });
+  pressOnly(cutB, EX.cut);
+  const tog = (id, key, onv) => { const b = $(id); b.setAttribute("aria-pressed", String(!!EX[key]));
+    b.onclick = () => { EX[key] = EX[key] ? (typeof EX[key] === "boolean" ? false : 0) : (typeof EX[key] === "boolean" ? true : 1);
+      b.setAttribute("aria-pressed", String(!!EX[key])); sfx("blip"); if(onv) onv(); viewDirty = true; }; };
+  tog("#v-spin", "spin"); tog("#v-sheets", "sheets", () => VIEW && (VIEW.s.sheets = EX.sheets)); tog("#v-hatch", "hatch", () => VIEW && (VIEW.s.hatch = EX.hatch));
+  $("#v-iso").oninput = e => { EX.frac = +e.target.value/100; $("#v-iso-o").textContent = e.target.value + "%"; if(VIEW){ VIEW.s.frac = EX.frac; viewDirty = true; } };
+  let drag = null, spawnT = 0, visible = true;
+  if(VIEW){
+    cv.addEventListener("pointerdown", e => { drag = {x:e.clientX, y:e.clientY}; cv.setPointerCapture(e.pointerId); });
+    cv.addEventListener("pointermove", e => { if(!drag) return;
+      const k = 3.2/cv.getBoundingClientRect().width;
+      VIEW.s.yaw -= (e.clientX - drag.x)*k; VIEW.s.pitch = Math.max(-1.45, Math.min(1.45, VIEW.s.pitch + (e.clientY - drag.y)*k));
+      drag = {x:e.clientX, y:e.clientY}; viewDirty = true; });
+    const end = () => drag = null; cv.addEventListener("pointerup", end); cv.addEventListener("pointercancel", end);
+    cv.addEventListener("keydown", e => {
+      const s = VIEW.s, st = 0.12;
+      if(e.key === "ArrowLeft") s.yaw += st; else if(e.key === "ArrowRight") s.yaw -= st;
+      else if(e.key === "ArrowUp") s.pitch = Math.min(1.45, s.pitch + st); else if(e.key === "ArrowDown") s.pitch = Math.max(-1.45, s.pitch - st); else return;
+      e.preventDefault(); viewDirty = true; });
+    cv.tabIndex = 0;
+  }
+  const fit = () => { if(VIEW) pixelFit(cv, {target:180}); pixelFit(sc); pixelFit(rc); viewDirty = true; };
+  fit(); addEventListener("resize", fit);
+  onVisible($("#nodescope"), v => visible = v);
+  let last = performance.now(), antT = 0;
+  (function loop(now){
+    requestAnimationFrame(loop);
+    const dt = Math.min(now - last, 60); last = now;
+    if(!visible || document.hidden) return;
+    if(VIEW){
+      if(EX.spin && !drag){ VIEW.s.yaw += dt*0.00045; viewDirty = true; }
+      const age = now - spawnT;
+      if(VIEW.s.fade < 1){ VIEW.s.fade = Math.min(1, Math.floor(age/380*16)/16 + 1/32); viewDirty = true; }
+      if(viewDirty){ VIEW.render(); drawGizmo(gz, VIEW.s.yaw, VIEW.s.pitch); viewDirty = false; }
+    }
+    antT += dt; if(EX.mark && antT > 160 && !REDUCED){ antT = 0; antPhase = (antPhase + 1) & 3; paintSlice(); }
+  })(last);
+  loadOrbital = (n, l, id, go = true) => {
+    EX.n = n; EX.l = l; EX.id = id; EX.plane = BEST_PLANE[id];
+    update(); if(go) document.getElementById("nodescope").scrollIntoView({behavior: REDUCED ? "auto" : "smooth"});
+  };
+  update();
+}
+</script>
+<script>
+/* ================= mundo 4: onion rows ================= */
+function initOnion(){
+  let l = 0;
+  const kl = makeKeys($("#on-l"), LETTER.map((s, i) => ({html:s, value:i})), v => { l = v; pressOnly(kl, v); build(); });
+  pressOnly(kl, l);
+  function build(){
+    const box = $("#onion"); box.innerHTML = "";
+    const id = DEFAULT_ORB[l];
+    box.style.setProperty("--cols", 7 - l);
+    for(let n = l + 1; n <= 7; n++){
+      const info = radialInfo(n, l), r = n - l - 1;
+      const b = document.createElement("button"); b.type = "button"; b.className = "bulb px";
+      b.setAttribute("aria-label", `${orbText(n, id)}: ${r} radial node${r === 1 ? "" : "s"}. Open in the Nodescope`);
+      b.innerHTML = `<canvas width="72" height="72"></canvas><span class="nm">${orbHTML(n, id)}</span>
+        <span class="nn">${r} RADIAL NODE${r === 1 ? "" : "S"}</span>
+        <span class="rr">${r ? "r = " + info.nodes.map(x => fmt(x, 1)).join(" · ") + " a<sub>0</sub>" : "no nodal spheres"}</span>`;
+      box.appendChild(b);
+      const cv = b.querySelector("canvas");
+      paintField(cv.getContext("2d"), sampleField(72, n, l, id, "xz", info.r995*0.92, true), {mark:true, radialOnly:true, gamma:0.36});
+      b.addEventListener("click", () => { sfx("blip"); loadOrbital(n, l, id); });
+    }
+  }
+  build();
+}
+
+/* ================= mundo 5: gallery (3D thumbnails) ================= */
+function initGallery(){
+  const box = $("#gallery");
+  const FAM = [
+    ["s", "ℓ = 0", "A sphere. No angular nodes."],
+    ["p", "ℓ = 1", "Two lobes split by 1 nodal plane."],
+    ["d", "ℓ = 2", "2 nodal planes, except d<sub>z²</sub>, which has 2 cones."],
+    ["f", "ℓ = 3", "3 planes, or 1 plane + 2 cones."]];
+  const cards = [];
+  FAM.forEach(([L, lbl, desc], l) => {
+    const fam = document.createElement("div"); fam.className = "fam";
+    fam.innerHTML = `<div class="fam-h"><span class="big">${L}</span><span class="label">${lbl}</span><p>${desc}</p></div><div class="fam-cards"></div>`;
+    const wrap = fam.querySelector(".fam-cards");
+    ORBS_BY_L[l].forEach(o => {
+      const n = l + 1, b = document.createElement("button"); b.type = "button"; b.className = "pick px";
+      b.setAttribute("aria-label", `${orbText(n, o.id)}: ${nodeSummary(o.id)}. Open in the Nodescope`);
+      b.innerHTML = `<canvas width="84" height="84"></canvas><span class="nm">${orbHTML(n, o.id)}</span>
+        <span class="ics">${o.nodes.map(nd => icon(nd[0])).join("")}</span><span class="nd">${nodeSummary(o.id)}</span>`;
+      wrap.appendChild(b);
+      b.addEventListener("click", () => { sfx("blip"); loadOrbital(n, l, o.id); });
+      cards.push({b, cv: b.querySelector("canvas"), n, l, id: o.id});
+    });
+    box.appendChild(fam);
+  });
+  glyphify(box);
+  let TH;
+  const off = document.createElement("canvas"); off.width = off.height = 84;
+  try{ TH = new OrbitalGL(off, true); }catch(e){
+    cards.forEach(c => paintField(c.cv.getContext("2d"), sampleField(84, c.n, c.l, c.id, BEST_PLANE[c.id], radialInfo(c.n, c.l).r995*0.8, false), {mark:true}));
+    return;
+  }
+  const shot = (c, yaw) => {
+    TH.set({n:c.n, l:c.l, id:c.id, cut:0, sheets:1, frac:0.85, fade:1, yaw, pitch:0.36});
+    TH.render(); const ctx = c.cv.getContext("2d"); ctx.drawImage(off, 0, 0);
+  };
+  let q = 0, started = false;
+  const next = () => { if(q < cards.length){ shot(cards[q], 0.62); q++; setTimeout(next, 16); } };
+  onVisible(box, v => { if(v && !started){ started = true; next(); } });
+  let hov = null, yaw = 0.62;
+  cards.forEach(c => {
+    c.b.addEventListener("pointerenter", () => { if(REDUCED) return; hov = c; yaw = 0.62; });
+    c.b.addEventListener("pointerleave", () => { if(hov === c){ hov = null; if(started) shot(c, 0.62); } });
+  });
+  let last = performance.now();
+  (function loop(now){ requestAnimationFrame(loop); const dt = Math.min(now - last, 60); last = now;
+    if(hov && q >= cards.length){ yaw += dt*0.0016; shot(hov, yaw); } })(last);
+}
+
+/* ================= mundo 6: node table ================= */
+function initTable(){
+  const t = $("#ntable");
+  let h = `<caption class="sr">Radial and angular nodes for n from 1 to 7 and ℓ from 0 to 3</caption><colgroup><col class="rh"><col><col><col><col></colgroup><thead><tr><th></th>` +
+    LETTER.map((s, l) => `<th scope="col">${s}<br><span class="label">ℓ = ${l}</span></th>`).join("") + `</tr></thead><tbody>`;
+  for(let n = 1; n <= 7; n++){
+    h += `<tr><th scope="row" class="row">n = ${n}</th>`;
+    for(let l = 0; l < 4; l++){
+      if(l > n - 1){ h += `<td class="x"><span>does not exist</span></td>`; continue; }
+      const r = n - l - 1;
+      const ics = Array.from({length:r}, () => `<span class="rad">${icon("ring")}</span>`).join("") + Array.from({length:l}, () => `<span class="ang">${icon("bar")}</span>`).join("");
+      h += `<td><button type="button" data-n="${n}" data-l="${l}" aria-label="${n}${LETTER[l]}: ${r} radial, ${l} angular"><span class="cn">${n}${LETTER[l]}</span>
+        <span class="ci">${ics || '<span class="cc">no nodes</span>'}</span><span class="cc">R ${r} · A ${l} · T ${n - 1}</span></button></td>`;
+    }
+    h += `</tr>`;
+  }
+  t.innerHTML = h + `</tbody>`;
+  glyphify(t);
+  t.addEventListener("click", e => { const b = e.target.closest("button[data-n]"); if(!b) return; sfx("blip"); const l = +b.dataset.l; loadOrbital(+b.dataset.n, l, DEFAULT_ORB[l]); });
+  t.addEventListener("pointerover", e => { const b = e.target.closest("button[data-n]");
+    t.querySelectorAll("td.hi").forEach(td => td.classList.remove("hi"));
+    if(b) t.querySelectorAll(`button[data-n="${b.dataset.n}"]`).forEach(x => x.parentElement.classList.add("hi")); });
+  t.addEventListener("pointerleave", () => t.querySelectorAll("td.hi").forEach(td => td.classList.remove("hi")));
+}
+
+/* ================= mundo 7: boss quiz ================= */
+function initQuiz(){
+  const body = $("#q-body"), ROUNDS = 10;
+  let G = null, hi = store.get("hi", 0);
+  const pad = v => String(v).padStart(6, "0");
+  const setHi = () => { $("#hud-hi").textContent = pad(hi); };
+  setHi();
+  const rnd = k => Math.floor(Math.random()*k);
+  const shuffle = a => { for(let i = a.length - 1; i > 0; i--){ const j = rnd(i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  const numOpts = (ans, max) => { const s = new Set([ans]); while(s.size < 4){ const v = Math.max(0, ans + rnd(7) - 3); if(v <= max) s.add(v); if(s.size < 4 && Math.random() < 0.2) s.add(rnd(max + 1)); } return shuffle([...s]).map(String); };
+  const pickNL = (minL = 0) => { const l = minL + rnd(4 - minL), n = l + 1 + rnd(7 - l); return [n, l]; };
+  const SHAPES = ["no angular nodes", "1 plane", "2 planes", "2 cones", "1 plane + 2 cones", "3 planes"];
+  const GEN = [
+    () => { const [n, l] = pickNL(); const a = n - l - 1;
+      return {q:`How many RADIAL nodes does a ${n}${LETTER[l]} orbital have?`, opts:numOpts(a, 6), ans:String(a), why:`Radial = n − ℓ − 1 = ${n} − ${l} − 1 = ${a}.`}; },
+    () => { const l = 1 + rnd(3), n = l + 1 + rnd(7 - l), o = ORBS_BY_L[l][rnd(ORBS_BY_L[l].length)];
+      return {q:`How many ANGULAR nodes does the ${orbHTML(n, o.id)} orbital have?`, opts:numOpts(l, 6), ans:String(l), why:`Angular = ℓ = ${l}. It does not depend on n.`}; },
+    () => { const [n, l] = pickNL();
+      return {q:`How many nodes IN TOTAL does a ${n}${LETTER[l]} orbital have?`, opts:numOpts(n - 1, 6), ans:String(n - 1), why:`Total = n − 1 = ${n - 1}, whatever ℓ is.`}; },
+    () => { const [n, l] = pickNL(); const r = n - l - 1, s = new Set([`${n}${LETTER[l]}`]);
+      const cand = []; for(let N = 1; N <= 7; N++) for(let L = 0; L < Math.min(4, N); L++) if(!(N === n && L === l)) cand.push(`${N}${LETTER[L]}`);
+      shuffle(cand).sort((a, b) => Math.abs(+a[0] - n) - Math.abs(+b[0] - n)); for(const c of cand){ if(s.size >= 4) break; s.add(c); }
+      return {q:`Which orbital has ${r} radial node${r === 1 ? "" : "s"} and ${l} angular node${l === 1 ? "" : "s"}?`, opts:shuffle([...s]), ans:`${n}${LETTER[l]}`,
+        why:`ℓ = ${l} → ${LETTER[l]}. n = radial + angular + 1 = ${r} + ${l} + 1 = ${n}.`}; },
+    () => { const pool = [0,1,3,4,5,8,9,10,12,13,14]; const id = pool[rnd(pool.length)], o = ORBS[id], ans = nodeSummary(id);
+      const s = new Set([ans]); shuffle(SHAPES.slice()).forEach(x => { if(s.size < 4) s.add(x); });
+      return {q:`What shape are the angular nodes of ${o.h}?`, opts:shuffle([...s]), ans,
+        why: id === 0 ? "s has ℓ = 0: no angular nodes." : `${o.h}: ${o.nodes.map(x => x[1] + " (" + x[2] + ")").join(", ")}.`}; },
+    () => { const l = rnd(3), n = l + 1 + rnd(4 - l), id = DEFAULT_ORB[l], r = n - l - 1;
+      return {q:`This is a slice of ${l === 0 ? "an" : "a"} ${LETTER[l]} orbital. Count the dark rings: how many radial nodes does it have?`, opts:numOpts(r, 4), ans:String(r),
+        fig:{n, l, id}, why:`It is ${orbHTML(n, id)}: n − ℓ − 1 = ${n} − ${l} − 1 = ${r} sphere${r === 1 ? "" : "s"}.`}; }];
+  function hud(){
+    $("#q-hearts").innerHTML = [0,1,2].map(i => `<i class="ic ic-heart ${G && i >= G.lives ? "off" : ""}" aria-hidden="true"></i>`).join("") + `<span class="sr">${G ? G.lives : 3} lives</span>`;
+    $("#q-round").textContent = `${G ? Math.min(G.round, ROUNDS) : 0}/${ROUNDS}`;
+    $("#q-streak").textContent = "×" + (G ? Math.min(1 + G.streak, 4) : 1);
+    $("#q-score").textContent = pad(G ? G.score : 0);
+  }
+  function title(kind){
+    body.className = "boss-body nofig";
+    const t = {
+      start:[`READY?`, `Ten questions about radial, angular and total nodes. Miss three and the game is over.`, "START"],
+      win:[`VICTORY!`, `You finished with ${G && G.score} points. ${G && G.score >= hi ? "New high score!" : "High score: " + pad(hi)}`, "PLAY AGAIN"],
+      over:[`GAME OVER`, `You reached question ${G && G.round} with ${G && G.score} points. Review the node table and try again.`, "CONTINUE"]}[kind];
+    body.innerHTML = `<div class="boss-title"><div class="bt">${t[0]}</div><p>${t[1]}</p>
+      <button class="btn cta big" type="button" id="q-go">${icon("play")} ${t[2]}</button></div>`;
+    $("#q-go").onclick = start;
+  }
+  function start(){ sfx("start"); G = {round:0, lives:3, score:0, streak:0, locked:false}; nextQ(); }
+  function nextQ(){
+    if(G.lives <= 0){ sfx("over"); finish("over"); return; }
+    if(G.round >= ROUNDS){ sfx("win"); finish("win"); return; }
+    G.round++; const g = GEN[(G.round === ROUNDS ? 5 : rnd(GEN.length))](); G.cur = g; G.locked = false;
+    body.className = "boss-body" + (g.fig ? "" : " nofig");
+    body.innerHTML = `<div class="boss-q"><span class="label">question ${G.round}</span><div class="qt">${g.q}</div>
+      <div class="opts">${g.opts.map((o, i) => `<button class="btn" type="button" data-v="${o}"><span class="k">${i + 1}</span>${o}</button>`).join("")}</div>
+      <div id="q-exp"></div></div>` + (g.fig ? `<div class="boss-fig"><canvas width="96" height="96"></canvas><p>√r scale. Gold and red lobes have opposite signs.</p></div>` : "");
+    if(g.fig){ const cv = body.querySelector("canvas"), f = g.fig; paintField(cv.getContext("2d"), sampleField(96, f.n, f.l, f.id, "xz", radialInfo(f.n, f.l).r995*0.92, true), {gamma:0.36}); pixelFit(cv); }
+    body.querySelectorAll(".opts .btn").forEach(b => b.onclick = () => answer(b));
+    glyphify(body); hud();
+  }
+  function answer(b){
+    if(G.locked) return; G.locked = true;
+    const ok = b.dataset.v === G.cur.ans;
+    body.querySelectorAll(".opts .btn").forEach(x => { x.disabled = x !== b && x.dataset.v !== G.cur.ans; if(x.dataset.v === G.cur.ans) x.classList.add("ok"); });
+    if(ok){ G.streak++; G.score += 100*Math.min(G.streak, 4); sfx("ok"); } else { b.classList.add("bad"); G.lives--; G.streak = 0; sfx("bad"); }
+    if(G.score > hi){ hi = G.score; store.set("hi", hi); setHi(); }
+    const ex = $("#q-exp");
+    ex.innerHTML = `<div class="explain"><b class="${ok ? "okt" : "badt"}">${ok ? "NICE! +" + 100*Math.min(G.streak, 4) : "OUCH! −1 LIFE"}</b><span>${G.cur.why}</span>
+      <button class="btn" type="button" id="q-next">${icon("play")} ${G.lives <= 0 ? "SEE RESULTS" : G.round >= ROUNDS ? "FINISH" : "NEXT"}</button></div>`;
+    glyphify(ex); hud(); $("#q-next").onclick = () => { sfx("blip"); nextQ(); }; $("#q-next").focus({preventScroll:true});
+  }
+  function finish(kind){ hud(); title(kind); }
+  addEventListener("keydown", e => {
+    if(!G || G.locked || !/^[1-4]$/.test(e.key)) return;
+    const r = $("#boss").getBoundingClientRect(); if(r.bottom < 0 || r.top > innerHeight) return;
+    const b = body.querySelectorAll(".opts .btn")[+e.key - 1]; if(b) answer(b);
+  });
+  hud(); title("start");
+}
+
+/* ================= boot ================= */
+function boot(){
+  const strip = ditherStrip(PAL[4], PAL[0]);
+  const st = document.createElement("style");
+  st.textContent = `.fade-bar{background-image:url(${strip})}`;
+  document.head.appendChild(st);
+  const snd = $("#tog-sound"), crt = $("#tog-crt");
+  SOUND = store.get("sound", false); snd.setAttribute("aria-pressed", String(SOUND));
+  snd.onclick = () => { SOUND = !SOUND; store.set("sound", SOUND); snd.setAttribute("aria-pressed", String(SOUND)); sfx("start"); };
+  let crtOn = store.get("crt", true);
+  const applyCrt = () => { document.body.classList.toggle("crt-off", !crtOn); crt.setAttribute("aria-pressed", String(crtOn)); };
+  applyCrt(); crt.onclick = () => { crtOn = !crtOn; store.set("crt", crtOn); applyCrt(); sfx("blip"); };
+  buildLogo();
+  const safe = f => { try{ f(); }catch(e){ console.error(e); } };
+  safe(initAttract); safe(initString); safe(initDrum); safe(initCalc); safe(initScope);
+  safe(initOnion); safe(initGallery); safe(initTable); safe(initQuiz);
+  glyphify(document.body);
+  const links = [...document.querySelectorAll(".hud nav a")];
+  const secs = links.map(a => document.querySelector(a.getAttribute("href")));
+  if("IntersectionObserver" in window){
+    const io = new IntersectionObserver(es => es.forEach(e => { if(e.isIntersecting){ const i = secs.indexOf(e.target); links.forEach((a, j) => a.classList.toggle("active", i === j)); } }), {rootMargin:"-45% 0px -50% 0px"});
+    secs.forEach(s => s && io.observe(s));
+  }
+}
+if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot); else boot();
+</script>
+
+</body>
+</html>
